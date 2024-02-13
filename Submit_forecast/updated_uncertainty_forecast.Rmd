@@ -110,14 +110,17 @@ forecast_horizon <- 30
 forecast_dates <- seq(from = ymd(forecast_date), to = ymd(forecast_date) + forecast_horizon, by = "day")
 n_members <- 31
 
+forecast_df <- NULL
 
 for(i in 1:length(lake_sites$field_site_id)) {  
+  
   
   curr_site <- lake_sites$field_site_id[i]
   
   # Get only the necessary data for the specific site
   site_target <- targets_lm |>
-    filter(site_id == curr_site)
+    filter(site_id == curr_site) |>
+    na.omit()
 
   noaa_future_site <- noaa_future_daily |> 
     filter(site_id == curr_site)
@@ -132,14 +135,17 @@ for(i in 1:length(lake_sites$field_site_id)) {
   fit_summary <- summary(fit)
   coeffs <- round(fit$coefficients, 2)
   params_se <- fit_summary$coefficients[,2]
-  param_df <- data.frame(beta1 = rnorm(30, coeffs[1], params_se[1]),
-                       beta2 = rnorm(30, coeffs[2], params_se[2]))
+  mod <- predict(fit, data = site_target)
+  residuals <- mod - site_target$oxygen
+
+  param_df <- data.frame(beta1 = rnorm(n_members, coeffs[1], params_se[1]),
+                       beta2 = rnorm(n_members, coeffs[2], params_se[2]))
   
   # proc uncertainty
-  residuals <- predict(fit, site_target)
   sigma <- sd(residuals, na.rm = TRUE) 
   
   # Loop through all forecast dates
+
   for (t in 1:length(forecast_dates)) {
   
   #pull driver ensemble for the relevant date; here we are using all 30 NOAA ensemble members
@@ -149,7 +155,7 @@ for(i in 1:length(lake_sites$field_site_id)) {
   # use linear regression to forecast water temperature for each ensemble member
   # You will need to modify this line of code if you add additional weather variables or change the form of the model
   # The model here needs to match the model used in the lm function above (or what model you used in the fit)
-  forecasted_oxygen <- param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity
+  forecasted_oxygen <- param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity + rnorm(n = n_members, mean = 0, sd = sigma) 
 
     
   # put all the relevant information into a tibble that we can bind together

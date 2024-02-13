@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2024-02-12" />
+<meta name="date" content="2024-02-13" />
 
 <title>NEON forecast challenge submission</title>
 
@@ -350,7 +350,7 @@ display: none;
 
 
 <h1 class="title toc-ignore">NEON forecast challenge submission</h1>
-<h4 class="date">2024-02-12</h4>
+<h4 class="date">2024-02-13</h4>
 
 </div>
 
@@ -424,14 +424,17 @@ forecast_df &lt;- NULL</code></pre>
 forecast_dates &lt;- seq(from = ymd(forecast_date), to = ymd(forecast_date) + forecast_horizon, by = &quot;day&quot;)
 n_members &lt;- 31
 
+forecast_df &lt;- NULL
 
 for(i in 1:length(lake_sites$field_site_id)) {  
+  
   
   curr_site &lt;- lake_sites$field_site_id[i]
   
   # Get only the necessary data for the specific site
   site_target &lt;- targets_lm |&gt;
-    filter(site_id == curr_site)
+    filter(site_id == curr_site) |&gt;
+    na.omit()
 
   noaa_future_site &lt;- noaa_future_daily |&gt; 
     filter(site_id == curr_site)
@@ -446,14 +449,17 @@ for(i in 1:length(lake_sites$field_site_id)) {
   fit_summary &lt;- summary(fit)
   coeffs &lt;- round(fit$coefficients, 2)
   params_se &lt;- fit_summary$coefficients[,2]
-  param_df &lt;- data.frame(beta1 = rnorm(30, coeffs[1], params_se[1]),
-                       beta2 = rnorm(30, coeffs[2], params_se[2]))
+  mod &lt;- predict(fit, data = site_target)
+  residuals &lt;- mod - site_target$oxygen
+
+  param_df &lt;- data.frame(beta1 = rnorm(n_members, coeffs[1], params_se[1]),
+                       beta2 = rnorm(n_members, coeffs[2], params_se[2]))
   
   # proc uncertainty
-  residuals &lt;- predict(fit, site_target)
   sigma &lt;- sd(residuals, na.rm = TRUE) 
   
   # Loop through all forecast dates
+
   for (t in 1:length(forecast_dates)) {
   
   #pull driver ensemble for the relevant date; here we are using all 30 NOAA ensemble members
@@ -463,7 +469,7 @@ for(i in 1:length(lake_sites$field_site_id)) {
   # use linear regression to forecast water temperature for each ensemble member
   # You will need to modify this line of code if you add additional weather variables or change the form of the model
   # The model here needs to match the model used in the lm function above (or what model you used in the fit)
-  forecasted_oxygen &lt;- param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity
+  forecasted_oxygen &lt;- param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity + rnorm(n = n_members, mean = 0, sd = sigma) 
 
     
   # put all the relevant information into a tibble that we can bind together
@@ -479,886 +485,12 @@ for(i in 1:length(lake_sites$field_site_id)) {
   
   message(curr_site, &#39;forecast run&#39;)
 }</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
 <pre><code>## BARCforecast run</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length
-
-## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
 <pre><code>## CRAMforecast run</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length
-
-## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
 <pre><code>## LIROforecast run</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length
-
-## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
 <pre><code>## PRLAforecast run</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length
-
-## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
 <pre><code>## PRPOforecast run</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length
-
-## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
 <pre><code>## SUGGforecast run</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length
-
-## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta2 * site_drivers$relative_humidity: longer object
-## length is not a multiple of shorter object length</code></pre>
-<pre><code>## Warning in param_df$beta1 + param_df$beta2 * site_drivers$relative_humidity:
-## longer object length is not a multiple of shorter object length</code></pre>
 <pre><code>## TOOKforecast run</code></pre>
 <p>Remember to change the model_id when you make changes to the model
 structure!</p>
@@ -1377,7 +509,7 @@ date &lt;- forecast_df_EFI$reference_datetime[1]
 forecast_name_1 &lt;- paste0(forecast_df_EFI$model_id[1], &quot;.csv&quot;)
 forecast_file_1 &lt;- paste(theme, date, forecast_name_1, sep = &#39;-&#39;)
 forecast_file_1</code></pre>
-<pre><code>## [1] &quot;aquatics-2024-02-12-example_WP_SP24_Uncertainty.csv&quot;</code></pre>
+<pre><code>## [1] &quot;aquatics-2024-02-13-example_WP_SP24_Uncertainty.csv&quot;</code></pre>
 <pre class="r"><code>if (!dir.exists(&#39;Forecasts&#39;)) {
   dir.create(&#39;Forecasts&#39;)
 }
@@ -1385,7 +517,7 @@ forecast_file_1</code></pre>
 write_csv(forecast_df_EFI, file.path(&#39;Forecasts&#39;,forecast_file_1))</code></pre>
 <p>Check that forecast format is valid</p>
 <pre class="r"><code>neon4cast::forecast_output_validator(file.path(&#39;Forecasts&#39;,forecast_file_1))</code></pre>
-<pre><code>## Forecasts/aquatics-2024-02-12-example_WP_SP24_Uncertainty.csv</code></pre>
+<pre><code>## Forecasts/aquatics-2024-02-13-example_WP_SP24_Uncertainty.csv</code></pre>
 <pre><code>## ✔ file has model_id column
 ## ✔ forecasted variables found correct variable + prediction column
 ## ✔ file has correct family and parameter columns
@@ -1401,7 +533,7 @@ write_csv(forecast_df_EFI, file.path(&#39;Forecasts&#39;,forecast_file_1))</code
 <p>Change eval = TRUE if you want to submit</p>
 <pre class="r"><code>neon4cast::submit(forecast_file = file.path(&#39;Forecasts&#39;, forecast_file_1), ask = FALSE) # if ask = T (default), it will produce a pop-up box asking if you want to submit</code></pre>
 <pre><code>## validating that file matches required standard</code></pre>
-<pre><code>## Forecasts/aquatics-2024-02-12-example_WP_SP24_Uncertainty.csv</code></pre>
+<pre><code>## Forecasts/aquatics-2024-02-13-example_WP_SP24_Uncertainty.csv</code></pre>
 <pre><code>## ✔ file has model_id column
 ## ✔ forecasted variables found correct variable + prediction column
 ## ✔ file has correct family and parameter columns
@@ -1420,7 +552,7 @@ write_csv(forecast_df_EFI, file.path(&#39;Forecasts&#39;,forecast_file_1))</code
   geom_line() +
   facet_wrap(~site_id) +
   labs(title = paste0(&#39;Forecast generated for &#39;, forecast_df_EFI$variable[1], &#39; on &#39;, forecast_df_EFI$reference_datetime[1]))</code></pre>
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUAAAAPACAMAAADDuCPrAAACZ1BMVEUAAAAAADoAAGYAOjoAOmYAOpAAZpAAZrYZGT8ZGWIZPz8ZP2IZP4EZYp8aGhozMzM6AAA6ADo6OgA6Ojo6OmY6OpA6ZmY6ZpA6ZrY6kJA6kLY6kNs/GRk/GWI/Pxk/Pz8/P2I/YmI/YoE/Yp8/gYE/gb1NTU1NTW5NTXlNTYBNTY5Nbm5Nbo5NbqtNgK1NjshZTU1iGRliPxliPz9iYhliYj9igZ9in71in9lmAABmADpmOgBmOjpmZgBmZjpmZmZmZpBmkGZmkJBmkLZmkNtmtrZmtttmtv9nTU1uTU1uTY5ubk1ubo5ujo5ujqtujshuq6tuq+SBPxmBYj+BgZ+Bn72BvZ+BvdmOTU2Obk2Obm6Ojm6Ojo6Oq6uOq8iOyOSOyP+QOgCQOjqQZgCQZjqQZmaQkDqQkGaQkLaQtraQttuQtv+Q27aQ29uQ2/+fYhmfYj+fgT+fgWKfgYGfvYGfvb2fvdmf2Z+f2b2f2dmrbk2rjm6rq46rq8iryOSr5Mir5P+t2dm2ZgC2Zjq2Zma2kDq2kGa2kJC2tpC2tra2ttu229u22/+2//+9gT+9n2K9n4G9vYG9vZ+9vdm92b292dnIg03Ijk3Ijm7Iq27Iq6vI5KvI5OTI5P/I/8jI///Zn2LZvYHZvZ/Zvb3Zw5fZ2Z/Z2a3Z2b3Z2cPZ2dnbkDrbkGbbtmbbtpDbtrbb27bb29vb2//b/7bb///kq27ktW/kyI7kyKvkyMjk5Kvk5Mjk/+Tk///r6+v/tW//tmb/yI7/25D/27b/29v/5I7/5Kv/5Mj/5OT//7b//8j//9v//+T////aovrWAAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nOy9Dbskx3kdNhDAB+DXxUZgQEZAbIUKZxNgkQ0oWyQjhlTERPQ1KcAA7GghWRYYi08sJREkJVGiRUzDUCibEgXSlJkLOlljQRpZ75o0xXADxvKO95LMbrh750dl+rO+3vrst6ffvn3O8+zeme63Tr1Vp+rc6uqeuastAAAAUITV1AkAAADMFTBQAACAQsBAAQAACgEDBQAAKAQMFAAAoBAwUAAAgELAQAEAAAoBAwUAACgEDBQAAKAQMFAAAIBCwEABAAAKAQMFAAAoBAwUAACgEDBQAACAQsBAAQAACjGmgd5cWfjkiJXNDq+sVo84B7/50K6b7v1vJkhnTHz7139816yHPvFddejutz66O/Se3/xuMKrBK6t7fovkzSHRcG31tswSAODBqTXQb32UnnRi6qYM9A/qbvLYxVxx9zOd/vf0A+AHP9seuu+LgagGN309kkOi4ftnNANNKgEAPpxSA93Ni8lsKLFuwkDbDvuxPxklr4mgLEqNgB99pD/SNpaKUrFkf+aQWMV6A00qAQBejGygb5vowmg3SyYz0MS6CQO9trOK3xwlpwmxa+fqfd/ZedUfnumdbnfsnt01893P787d741S5cn+zCFR+EFlu/2wTCkBAH7AQKeqmzDQVzonOEWoFny/0LzcXTs3Ta5eNMu97vKcitp2EbSB5pAofPPMSjPQlBIAEAAMdKq6aQM9dXP4prneq39BXFO/KNomU1E1dr527xmyPzNIevzg13fu+eMqLF4CAIKAgU5V90IM9JrWpnZAVBuPnzQPEVE1qv3k/5bszwySHtUqc/WIdipaAgDCmMJAv/3R3UC+571fbN/uRvEn7/7Bbpnxnnqa/ODXjbPbaoOqetDkPdru4LeqmNW9n/hOd+AH9bMo9773j+t39UQhrvzuVk8J3fO+7+pOZVX3SjUt62P3ag+2WEFWxkY2Vt1Oa+pHb6wcjKTbrbhwJ3k6s+K4X9F90vDyV1rHKe4FT6Xx8A7tgNCzIn7b6MPmmt2IHhkkPXZ9ct8XfcMSBgoUYP8Gqm58vq85WU2SVzrPufsH1tnt9l90ztKR9Y+vdI+eqELNEy0eA+3K3fNbvXU41VVe0B3rijtBRsZWNkbdbmuIHFoYBhruJH9nXusCqhP3G2vancvU1lzaCwEFw+EK7VX3rqX9/Rp9IWlGtX1yv2dFn06ilfm3qg1Pj1OSJQAgjL0bqPbwSXt2N3If6t7qj5W0w/maHa8zNDPrFXWgnlW0gapyP/afttbhVvdKl4yqzw3SM7az0et2S/YuqXLooBtouJMCnVnVWL+41veEtt93/4BeCCkYDFeo6rH3Kl3v66K2nefTBppMEiyZVgIAfNi7gVZmV137fbtaCNUjtnbIn/ju9offaV5Xj5X88A9W2h3b+36zXSU90jLc8wvfbR89eaQNqQptf/j5LoaadPUjK9/tbsT2VZvV1V5c5Vcv1D5JB+kZO9lodTsla6uqjnzrZ/sczAwfSeikUGe2N5O7W9TqmdTOZEp7IVRpMFzhZrs9cVNf6zn7vjfV80TNpoPXQNNIqJKEgYZKAIAPe3yQvp5Y6mmRu6+0Q/baSl9ydPOvG9Cv9MP9Wr+DpsW0Nw+6udS9JCZdVXPzyEr9KOAj3uraZKqTniBvxnWmfd1uSZVDbaU+Aw13ktkkK6429N+qau4Xy490sWYGeb0QrDQUrtCfuxbyPo1BrZkJA00lceG9MMICFMjGvg1U+WE/ca+pa219VvTLD+3jK1XcTYOhNdD7rMUDMek07pvthHer275irH/up4O0jN1sVN1uyVeM7T2vgYY7yYi34xonUCf6a/hrTmuyeiFYaSi8R7+7EPQ+FeX2p4FEEgKUgYZLAIAPezZQY7dKOVQ3dl/Rzt6sJ0Xw3mh7X6Su5+Hf+I55xpp0es3dcsOtTjeAdooSQdfIpLq7NH3dTkm79R4DjXQS2SSVeNPr/Q2w9hq+jS3uhWClgXCjXOuyAe/TovrvEMk2UJ2EADGkIiUAwIc974Eak8G5Ajc+mbyqD9/0Tsg/+4efPWPdsn7P3+mqcyed/UTPI2R1+lRs8qKCXJfQsulrcksaOVzzGmi4k8KduW13JHvqa/0+cZVcaS+EKw2Ed6h2RzuL8m9f6lF9//Q1qkx3MUkkRgm3p6hqASAHog10d5ackM03kKmJoZW77zfderojao7Q1kF6ARVkJmVn4zPQt33XyOHmWAZarSxVNWqb45EBvRCuNG6g9a3APzFL1TAWtHqUen7Aa6BxkjQDNZIDgBzM0EDVg5dqYtSf0WvguQs/loG62UxtoDf7XmhJd0HdlfxEBvrNlT4U9O+T07+6yoi6trLwSdMOk0iSDNRMDgByMKWBOvc1kh6Ibh9DfOjhn/+j/0u3gx/+g4/WT+Z0RpF2CW8/c0MaqB2kJUVkoxuoWbLkEt69+eOlu1/LyDC5R3q7Ke2FcKUxA62fk1IjQXdxjc6MIgzUbnychIQ1LBNKAIAPezZQz/2R+9URy1Ssz/Xd39yP/oX+4s7currbPQgavonUPTQd/ji66w5b80z70s5Gv4lklhx2E8kxJvomUvXib2u9Vl/Dd25d3AvBSiMG2j9eSlAofa2omIEmkZAwh2VKCQDwYd8P0mt3k7UndO53z7YrNO0xpnbKaLO1eWyRsqXkx5is6ggvIIJoy79pXcITJa3W+3wr3EnBzmyyMJ6R2l3D/3f9NW5pLwQrDRto/TvGPqL13/2eqA6eL2fJI9FgDMukEgDgw74NlH5GnHg48vvtl5i9ou/ttXapQmoGbUp3Z4MP0v+oe4Scrs7yAiLI3HSwslF1uyXN1mc+SO8aKBHXetor2kX8rt/+nY9oz4UW9UKw0qCB3nT/WoZKov9zHURUB4+B5pGYCfXDMq0EAPgg46Oc9+tn7/vj9oOR9dH+o5zd1Xn32cn6g4f9p2vuq/+y2Ld/VrsvT9hTvdmlfYzSrY7wAjfIXPxY2Wh1k/Sq9f4r53AnhTrzFfVxLf2XiqqrtBcilXrDtUsIRwr1ZfJklGLwfSN9OomGm8S6HQDKIOPLRPo5p98SVo9dG/Hq+zj6myXGftkjGs8nfTWbYVp1hBe4Qdaa2cpG1e2W1P6G2ccCBhrupEBn6ouxvvXXVtp6tLQXQgpGrvh1NPwaRd+jbpSqL+1vIoVINJjfB5pSAgB82P/X2f2of+5HfVObmnN3++eR+j+1+E3r6+z6UX/Pf9HtfvbfeNdvaN1U/tCjf+LovX+7vwq1q6O8wAnSMyayUXW7renM6p5P+u/CRzvJ25naxqr28UrtW0IH9IK30ug9J8KjrD+o6Ylqq/N9QXUOiQY1LFNLAIAPU3yh8req543u1b8rWJ9z366/nlj/+mT7C5Wbb/+t/hx4X/SHf1h/n5r2J8K/WZX5CbPi+quEKyLt04tWdbQXWEFGxkQ2Wt1ua75d/y3zLwYeY0roJAUjzvqcOv10WHEveCqNPfVEelTzJ90fUg8wFBhoDokG8yMHMFBgCMY0ULGgHn08xXCe9mqwsF4AgBGwHAPVlkn+Nc2phP6x8eX2AgCMgOUY6DXjeyoW9Nk9/YOOy+0FABgDyzHQ6tZO9bDO9tvVLZPlfPik+ip/ZZRL7QUAGAXLMdDma95aLGXp1T5lpW11LrEXAGAsLMhA1cM6y/nyiOY+s/FB9AX2AgCMhQUZaP/X43/+i1MnsjdU1+/3Wp/1Xl4vAMBYWJSBAgAAcAIGCgAAUAgYKAAAQCFgoAAAAIWAgQIAABQCBgoAAFAIGCgAAEAhYKAAAACFgIECAAAUAgYKAABQCBgoAABAIWCgAAAAhYCBAgAAFAIGCgAAUIjxDPQqIA1QSDygkHTAQJcLKCQeUEg6YKDLBRQSDygkHTDQ5QIKiQcUkg4Y6HIBhcQDCkkHDHS5gELiAYWkAwa6XEAh8YBC0gEDXS6gkHhAIemAgS4XUEg8oJB0wECXCygkHlBIOmCgywUUEg8oJB0w0OUCCokHFJIOGOhyAYXEAwpJBwx0uYBC4gGFpAMGulxAIfGAQtIBA10uoJB4QCHpgIE6eOPRgxoP/OTvdYeuPHvwgfblm08etHjHT321O/+V53ZlHnj/7zlcojFbha5aPU5qoml2+R3/3l/vjl/57//yv/v7e062HDNW6Gqly9tVV7/xaPXmFE2fBjBQB52B7vBhdehdrdxqBBwctMNjN1VbfIBmFIrZKmT3OKGJodllTcrLWoh8zFahGkEDJabP+7/qY5ILGKiDNx5tJt43frufai++/S898EvNSzUovvzowbubIwfv+NBX6/h5OehsFbJ73NXkqqHZ5YN3PNoffsejMNA9gTRQZ/p88OCBn/nTnZi/q37jzQgwUAedgVa/Gpt1y5tPvutL3cTUBkUzJK6+2Ov+6pwWNzM2ULvHXU1MzS4fvPOD/eF//8kZiTRXhRoEDdSdPl//YP/bbz6AgTroDXSnbbOivHzwgV54bQQ0L99QKxpt220OmKtCTo87mlw1Nbt88K7faX8XXn7gv4SB7gthA3Wmz+51d80wH8BAHbgr0Bd3ur7Yr0Z7wS/Xy58XNdP8xqwuQeaqkNPjjiZXTc12BvqP2mv4F9/+P8FA94WwgTZSvaqvOV6c1QKkBgzUQWegV367vbioD1xu3/Qj4MqX6k2c3mXnh5kq5Pa4rclVS7Pdz3/8bB3y5pPvfhMGui+EDJScPpfntwsKA3Wg7sK/s3mw4tXmMrG5vNBvI1Zqd8dniJkq5Pa4rclVS7NqXr5aT9Td/zDQvSFyF96dPm/M6QZfAxioA2WgD3yoen/l2Xaz23pkpr4RDAPdO0IG2mhia1YZ6OVmvfP234eB7g3h50A/9FU7BAZ6Sgy0vYTfXWR8uH5fXxW2u2uN4ld+56CdxVeehYHuF26P25rYmlUGWsdUh2Gge4P3El5JhRXo6TXQbkvmVeO5+m5QvNo+m4090H3Dvwf6av+8vKlZrWN1R6m6joeB7g2BPVB6+mAP9HQZaK22tmvz7qvaoHjxoBsK6uG1ywc/NaMBMFeFnB53NLE0q+fl7hq+vrCHge4NoZtIavrgLvzpNtDL3XRtnlLTHghtTuiXHS/O6knguSrk9LijiaVZbaC7oP/h0Xfbu27CMVOFWoQMlJo+eA70lBlof+lXw35ou7sKUR+l+NLBrAbAbBWye9zRxNKs1vHKsw/85eowDHRvCD4HqqZP+7ALPol02gz0S4/uZp82CF5tFzLt+93kfFdzI7G5o/j15/BZ+P3A7nFbE1uzfi/bepRbPuaqUIOggXbTZ/ez/yz8O+ejTAcYqAPt25h2Cmsbbm88at6DeOPRxjB3vzn17waaDWarkN3jtia2Zo2Btl/PBAPdG7St6A9Tn4Vv1LvyHL6N6XQa6E/+ja8adwl3r82nYLqN8Ktf/uk5fqHhbBW6avW4pcn/bGvWGGj7TQUw0L0hbKBq+uD7QE+VgS4GUEg8oJB0wECXCygkHlBIOmCgywUUEg8oJB0w0OUCCokHFJIOGOhyAYXEAwpJBwx0uYBC4gGFpAMGulxAIfGAQtIBA10uoJB4QCHpgIEuF1BIPKCQdMBAlwsoJB5QSDpgoMsFFBIPKCQdMNDlAgqJBxSSDhjocgGFxAMKScfeDHSzQ/N/KjKCs4jH4pWQcBYxoZCMnhyrwTOUXqhCkF4Fw0CZeCUkDAPlIhYivVCFIL0KhoEy8UpIGAbKRSxEeqEKQXoVDANl4pWQMAyUi1iI9EIVgvQqGAbKxCshYRgoF7EQ6YUqBOlVMAyUiVdCwjBQLmIh0gtVCNKrYBgoE6+EhGGgXMRCpBeqEKRXwTBQJl4JCcNAuYiFSC9UIUivgmGgTLwSEoaBchELkV6oQpBeBcNAmXglJAwD5SIWIr1QhSC9CoaBMvFKSBgGykUsRHqhCkF6FbwnAwUAADjlwAq0nFdCwliBchELkV6oQpBeBcNAmXglJAwD5SIWIr1QhSC9CoaBMvFKSBgGykUsRHqhCkF6FQwDZeKVkDAMlItYiPRCFYL0KhgGysQrIWEYKBexEOmFKgTpVTAMlIlXQsIwUC5iIdILVQjSq2AYKBOvhIRhoFzEQqQXqhCkV8EwUCZeCQnDQLmIhUgvVCFIr4JhoEy8EhKGgXIRC5FeqEKQXgXDQJl4JSQMA+UiFiK9UIUgvQqGgTLxSkgYBspFLER6oQpBehUMA2XilZAwDJSLWIj0QhWC9CoYBsrEKyFhGCgXsRDphSoE6VUwDJSJV0LCMFAuYiHSC1UI0qtgGCgTr4SEYaBcxEKkF6oQpFfBMFAmXgkJw0C5iIVIL1QhSK+CYaBMvBIShoFyEQuRXqhCkF4Fw0CZeCUkDAPlIhYivVCFIL0KhoEy8UpIGAbKRSxEeqEKQXoVDANl4pWQMAyUi1iI9EIVgvQqGAbKxCshYRgoF7EQ6YUqBOlVMIuB3rlwvn118tLhev3UJRgoHzEMdAJiIdILVQjSq2AWAz1an++cdF3hsddhoGzEMNAJiIVIL1QhSK+CGQz05GjdGejR+olL29sX10/cgIFyEcNAJyAWIr1QhSC9Ch5uoN97ft0Z6K3Deu1558LZl2GgXMQw0AmIhUgvVCFIr4IHG+j19frpt1oDvd7/fAYGykUMA52AWIj0QhWC9Cp4uIGe+9z2uDXOo/UL9c/uPQyUgRgGOgGxEOmFKgTpVfBgA9UM8+Rie+l+67DbBH2wRSExAADAXAADBQAAKASfgdoPMmWvjSVcJcwuYVzCcxELkV6oQpBeBY9koPZzTNmZSdBodgnDQLmIhUgvVCFIr4JhoEy8EhKGgXIRC5FeqEKQXgVzGijuwo9BDAOdgFiI9EIVgvQqmNVAu+c/8RwoIzEMdAJiIdILVQjSq2BWA8UnkUYghoFOQCxEeqEKQXoVzGqgJxfX5/BZeGZiGOgExEKkF6oQpFfBrAa6vY1vY2InhoFOQCxEeqEKQXoVzGug29sv7fzzKXv9CQMdQAwDnYBYiPRCFYL0KpjFQOPIzkyCRrNLGAbKRSxEeqEKQXoVDANl4pWQMAyUi1iI9EIVgvQqGAbKxCshYRgoF7EQ6YUqBOlVMAyUiVdCwjBQLmIh0gtVCNKrYBgoE6+EhGGgXMRCpBeqEKRXwTBQJl4JCcNAuYiFSC9UIUivgmGgTLwSEoaBchELkV6oQpBeBcNAmXglJAwD5SJmlX5VSixVIUivgmGgTLwSEoaBchEzSr+qUEYsVSFIr4JhoEy8EhKGgXIR80m/alFCLFUhSK+CYaBMvBIShoFyEXNJ31qnslAYKBOvjJ6AgbLxSkgYBspFvF3pKCXWCnevYKBMvDJ6AgbKxishYRjoIOJVENnEVqnmHQyUiVdGT8BA2XglJAwDVSDML2WrssOWPEmWIYkJ6214YaA8vDJ6AgbKxish4X0ZaM7lbXZepB35as9C8ErbbAqRsB3lOHS48j4ipydgoPsnhoFOwyshYV4DLTaqYhANHsiVzGKtMj0dWZaBdsTJLEOiUGKe8jlV0cfpNs1trBcmHBxTbTAMlIlXQsL7MlA9sSxPYQHRYM9ZC37CSC1JLJHi+SXGN9BYDt5E5zbWSxJOkggGysYrIeH97oGmmYDF64mNmwtdwdYXnuFzFnO8Nc7J1F6LpmK3bkwDjeVBZtXGzG2sZ0/OrvGBUdAGw0CZeCUkPKKBpvnRQIQbbM1oatKXJup2juf4hrDPbOl9zETwWAbqNK/hjXULXTacg4SxXvIE2yalpTBQNl4JCe93D3TkS3gq52Ec2/QHlTqfoxfKTlfm9Pom3UHLDTTYk9ZRKzLU/x6GcBuSwtrgnFh+YqvL6hfhdu7NQIH5Ic+rxGIuzdmrXJEiWdUNTbwUA/sw1vjuZQ4tVqDlvBISnuIufHp8MuVCEZOIUDjC5b8dMhWIcZhTorjejF5z70vSeVOTCAZazish4SkepC8e074BnDrtzQtqdcRM0leJDXUylt7GvbWQ1hNNaJxd4y020HwQt/kACzGFYKADeCUkPPldeP4R6xvG1qHueH+eTDapQU1HrNxjvmY7EpW21cHYBmpUFWmjmZiv84it1VjCBO/AZmUhpztjCsFAB/BKSHgUAyUG0IjjOQdNwupNn1thjhyP7RczjPAYU4DZrcqfEsHiSYJslxNb3kWJ8FaS3GMBYqvbJjdQb5YC/GibNPRM4iTFqMcivXoJ3wOdCEaDjUPT5jUAMYkIhX0FfZ/eL+sd10MDwyytadGe8PZJpHRmUwnaLVWvL5UJDTTWtCIDDfZPGxwhS6BIKxgoTj5055MYBjocc2hQVCJC4QijpJtIbusKyo1ShRvqI4opNIWBRhrtniaQ6EdtsJcmWZd4JUYgkXBa+zKjUtPvkliQgc4CMYlchfxC2eNs3rCb6e2JwBTxn7Hh/xUVU0jUHqi/I91WeANi3RPuJPJpaq/KZOuItGKt8SQXOJUCtzQMVBYIgRMNdODQSMjHPmcnwVBddl65u8HJXURdz248V/GCDdTzaAjdOfSZ1B7zEbgbbKGafK1zy2ftT2y2kczdjP31m7EwUEmgpI8ZaBovS0bGMYZHAYySRSTeSURUtV2lrYLINO3W+yeRPAP1a6gfGvjwjTeFLVEmJ2Gyyk1mT/g3sgIZp/COYKCBZscKFtR2uhCViFCYrSZn5FCBBcyRuDS6hJh4ahyIKSTdQDeWh3av9/AYk7cHE4nN8vN4jGnoQCsvv0hEJSIU1ssW1RAYOWSRILlTIJwKkVtwsdC9an+Mu8GbeC9megP1Zpm2QPeIH0BqLNGlPMSb02+gQAliEhEKDyGPjxx/wS29pDAOtOc5fM5uL+fQdNuWESvgLrw3y5AVWO0p+XxwEFkd3mehlwzzw0D3jDk0KCoRoXCEZtuH2PFpI8cNjWXcH85rd7wrvG22T9ippCeSlqrdbVMbaKBrEvLvWpFWPoHKsMDQYCWySDdeNgN1almwgepJS80+tL6JSuQqFJXY5A9VW7y3alVZHzICthatUYWdsFs91a6EZKyiWzcvL/JWLJMZqBdprUxDIXHfO2OlN2AWFCZC8J4mAx1rAO0RlPSDDFSjVZV4q89ahFjfrOrteyPhUEu7BntToBvnDbHfb+lHmUJ08Ww3Mg1UNTmjlekd4Hk8igr3JJxem34sOcGc9jqdllGJXAOVsowkLgO1N8O7yOxmYgCUG6jDWZQaXTSRy+y2ntbX1qZ11vlQXltnJhsZO8T0mjepb/z9PC8DpRFqIdEBlDF7Srh2Yv1MSIOUIG9jnaDzRZkZUz2iJSHWQLUG7T2NvnNM1Z0NnNFq9kvkKkRBJ0xZVab5R14jwi3sOX3J6+8cwtCocMqpnnToPWU9Dy/6LEaKgdJbiimo2hYeVHb/uOdW3tlKRJoKGOeDCegBqRtObsLheJrAg9ENlIfFx6t6MnQ+e7WUl7Clff0ip7zLFZAoa+jsHURCXcJmyIaaEdrh3GZZZeuXbk8m9Jg2pDzJxBSa9jEmp8m+pO3SXmcmO8hzCa/RUWmt9HWIWXv3Mu1mj/YukKoenfCEc4SBxmgGStbl6YrBFhDbkXFTc3MdmgMPohK5Ck2UeXwfjCjS/bQLDm2J1RWelUww4e6UNlbNbD0Xko5Ckz/GRJ8lRpYW5d8noXtrq5/xEHW907/r/7citO7Pu1sebr3B7vZaQi3128h+E4+Bmhl468rujVMEsyeaI9Z5O4ySiLMnBxYfWU6iP6IlwsvaHGzN7TqzlqBCkxvoyh5avrx7Br8P6wXzO3HVJWzlZdJt9PPtLzk6z3LoBqpS0On1s1uzvtAqfoCBtgR0M+m6krqFPG4VYOrWUOPS8hpUBdEdUYmInoxw2w9wMDbBaQYLnbZpO7bM0WyoYxGFGAz09i+v1+unLpUbqLc97ohLL5VZl0lAJkEHl9cTgLl9Q/ZCP+hY78LHYDt7sC6KIN72eIltBk/WQ7Lk4axkffE5WeQbqLdC7X1aMX/mpeWzqyLPBN7l1xBtjdlzYYWGG+itw3WFsy9zGagRSRfPvantboRllDNRwlL/ojXehyqxMvYmEE8lpv3GlSgCa1/Jydioi6ZITJUs0RMnN3u4gfqiRyJmMlAWxJaFe0mLYE/79WmM1awk6QUUrdBgAz25uH7i0vb27v8bTAYa7xuifaVcHAnRzGZebU9oZz0FrMbY6vlKB1Lwa09Mzwi2jnnqGVt1ZfFmxHqbRxw9rQaqv87BprSgTlBemsgl+Wn+TfayqS6l6sovvNqDgd46fOz13Y87F5wlqE/7QWC7NB8Lm+72U9/i6W6gxLQnpmcQXl51Uq8rmTfHjkIpEA56Wg3Uq7O2v+HZ2HVJnF/sno2TtEFHMw9G1xNshCa79r9TbUihwQZ6vD5f/dgtRF8Yw0CHlF06otoT0zMqly94Y1voGAba1BB79qGAuA6dp4E6eUVHRPdm64utn+bor3biA63npt8kY0PZWEvVNC41kdTqC7bBBKxAQ8OBDWNyzwUx7d3pGeOLWYFW7RADJdvQ5xD9DIWfOJjDPA20bD71vAaHFZJK1hWw+DOLF2JYPdHCMYX49kDPd0cebJFU3EmYOJQAD9mpgNa2vCYWqDm0fJ9nrILEFEpaVJz6PGD1h9Ex+QPDOJZUlFBCG5jpSYTz83C19VXH25HWn4mzplfv1BjSY6igJ6/Vd+Gf7u8h+Q00sYmnzwi1YWefMDuHtelDlS2Et+54er5uyWtOJFhKPxWCc4R07W9++E/RpVISciP08UG/3BoSmlm0h0yn8OVg1G0mEsp8m+Wgwx9jer420HPOg6ApVx+xxyz7KPNtKDYLedc9DtRXDlKNMA9tu7ji2nIRvfogLhAjSItt2ktKb75XvKGs7RziSSge/96A01d7uoQPK5T3ZSJ8YyWCvsFDaVYr88NyViW+ZplHNw2JTmQE+2ouSzmsEMMeaFigt44AACAASURBVLX43C1DB92FHzgemMdUR+QSupr1L1UGxggZe6AHPvET1X7jShRBaiydajQmLYeEJHoy4sl/b7J+XiLVIgNNaG9UoazBkV1iHHievvPIstfULGwcq40oNNhAj9bPtD/PW2dc7fm7p+Ojxi1rRStCf+uEUa+difmH7NufLEmRX9rh5kBpT0zPCPIfefLmYgbl5JCUhK+74uEJNHlpO48Ah4MZDXTCZ+gm88EhHaSr1K56YwoNNdCTi+3K89ah/ST9UO2T2q5oyeHIV1cWV1YS4yTsZEFoT0zPCEa795wTm7GPEO4OizenJ8uESmodq4EGUmEimgc2G9stVtoKmJY+SaF5Gqi9dIk0ma1eG/SDdP3vrRSKEZOMak9MzwhmZKDZxB1vpA8N4kFqeLJIUihQT0ouGXm7rYhwFH1gyFdXX5+6jFPbn3lMilE72r7c2uFmBgGF9noJ722ft+9og6qObjdWqFPUqTeYRXPKeDYuHYo4NrzT6HrSSG0pWQW037gSRbAEA52WOKrQ0LGlMWyL+VLKbdwZUfILRz+yJb92bqPVlEQZiTNCYgoxfBKp9CZSWjOscpvOP5XRhbvFCstIIAp35ywUHRutG8s2VZOy97284sNAuXhna6A6RvtgpB9dE7Rx7VkkabkRd9/cN3oJWyHjeMl9OL9Cwx9jur5u8Ix9IkH7SGO0QhpFs5jfEidDnWOddG/7ZGXmqyNwkrpAdH5pbozbYllVqxYp6oj2xPSMAAY6NvE+DTRhWKmRNFYN7t1VKyC5butKM+3itzvpi4gpxPB9oH9efR/op53HQFMv4ZP2bDSGgUraPjMI21DDfLXb0YkECRPIOh/VnpieEcBAxyZmMVCSuTkRjNbf2xFDngMtLljG1fbkgIQdMq9CEr6RPr0FKzb/LMpjWNWKJ/lXqj2o9VnQc6gLsegNEBgoF69kA/Vy2wNp6572bYhlD/69bw6MhJhC0g3UVRioEemRlNkJAy3nFWugwboSR1V6fJCpfREJ23LUlge7wrqHmxPeWJ9C0g1UMKxf2e1rb3iz18PYB966UmcnDLScd2oDNd5ttGuQSF2REZUdH2HzF2GbCJFVhHrjian+2271CLNXIwpNYaDJAoWgdjhSWSJRzu0d84WRsXupnJTBnuFOBxgoF+/UBmrIrMudk5c2SDwDJnz3Rb10DxJv7ej0MZwVHOiiBHanKRGFpvi78OkqsSNe15bqNvPI2Elywe1nGCgX73QG2kCJbGmdlVdf0j9krAo39vB3E9psnMfSTZb8dat3aBPHY2XCgRs12e3cVbfJM1BPd3BjX/WkZNG9bn7oZ5LvMKVVFNB+ky0RDHRs4iyFCKEz8+oH0sa34LLqCg4w8wwZmT5kqfNb8jhRe/8qXJ/NYl9p0t0mw0Cp+Z3QxbzPRLSEI5DSNQXe5mVgj7EN9YhCTPtNRCKfQmmhMNAS4mSFPCLn5kWMJ090cGQ5efUvjUTDw90msmK0nrBZNhuKr4/ynmlLVmvxllirYGMYqtZt0xuoRwe7e+jmBnrDjBx03k1QP+ANTEsupd5QQvUr6+jKGUZR7TcBiWjAQMcmTlLIr3B+XiaPl1cNuQTilTsYfUN50ydBLST1yjdWT1CVUFVuNsZ31FlNtQ5rlFL3QOluVH0Z7XiCwNsvOm+UKFCBRm0krPqZ8lA7NAsbnTj4q8MYTZvQ9IKBcvFOfxOJJy+CjBxigRpJ4j6eHq7aVOqWwVT1GzvW6Qm9jJVFd1Vm799aUVbZfkvD28sTGqjHAMxfRrFYu5ynoXrQ1nfK1ckzlowDWl9Gm6R1e6Re/ajrtuFuIZcRuITPI56Rgebl5Rudvc/ZjOQYK3g+KqeA1Tr6rN2TwTqsJa1VgQGd1/mqNzdYgIFSXeik7TuvJA8r5ZeSON4eICQiku77kuuava+tkV1tToW6ob2soVriGVswUC7e6fdA0/JKG3nmAHJhjlJ/gG9cJxZSk2tlzG/VOLsnQlVstdlj1eqEUte+Xt7JDbR9Q3Whlb33VIZGrst274iaPPtNRuZaqeAf4U6FXlX7n7G77y3V/OiXtnq+adpvXIkigIGOTcyokDvAnFMpg6a1KT+ZU1xtrvqL2EWNYF8hz+z0M5MJuIc6XnJWuklMaqB6phvDjZy9SrpTks2zL0D5nJmGOuh75o7OfqvyMU9Q3a6VDeRa/2ZxEqap6yNbI4ks7Y3EkgADHZuYSaGUGeLckvHb40a/2iLOm8eom+U09JPE/Axm7KncYtoQj/vQCfcVR7ttMgN12te/a1OjesCD1EFVe4yH1DoaTnjjWqgfVLfbbFSmOrd3s9bOTCXno1ZJwEB5eKe/ieSR2rh4ycnLS9rNDC3KKeclDo/K6oTm+HQF3ozN/OwKmy/Z0bZC7Yp13sQea5OYzEAtNzD7zBwWjndY5YgiHqysb52zUrGG2+C/RqAPgeQibbCemqe4tzeJgKj2G1eiCGCgYxNnGSihuLMlnpVXYExZqxv9TYg4cQ6k5ex/Itaoa9MnvFpRz5vTacWr75IQYqBa3mRbfG3M6f5wlIcpAYZc5TQa3SrLc8NcqdpvXIligycjFAZaQpylkCN6fAjE8/IMKMcUu1cx4uHDNidjLbg95eEyai9XaKI9UKMBZpP9F8rGQeMz66QIaSrZIf6utHhWmdZJDirVXqqIFkt1R8trbzjR7Ww6GAbKxCvDQGuQg4Y9L6vBweoiG3dmURbpqVxaNxnESwdPZqB0s+2bSJE7IU0Jc9t3Y3uopZGHjxh3aQkPh49Mb6PTGUa/dPHErQCzSRpgoFy8ggy0gpJ8bw32jbEAMTkyZye9IAPdhCwpFN8TG6Fegq27kjcDVXhuwilxgeWlh8lqFHFcFaGejfPlBgPl4hVmoOPnBelV8GQGSk/sDAtVJ6yb2uGiQTNTIaldqYgiwf7MmpdWTnYF3WuL0Qogn43zJAQD5eKFgXIRz076vRmoC8NJ3BNkqHuM4MpHS2CS5zampNldMf3Nqvu+eo25P+NpL09qAAAMwuTPgRoHyTBqs9JxRIJdmY3nuJtW+u+iVe6GE1G/mUyXUZtwt9KkcjeIiSSctvWxjkJCfqvnxEpIGCtQLuLZST+9gTbwOB8VYluMc5eJ8kOKwdh4jAaTm6vq0IbUyH/1TFcRg5uulbv3dxSZhNDpObtZBAPlIp6d9FIMtILlSgnX5X2xLcVEklMMoWSSna3wzqROoXHFm03XEnm42EpC6PSc3SyCgXIRz056SQZaIdu16tUfQaz7imk8WzImJws30CK2OKhu9zffw+AlM3PwExNJCJ2es5tFMFAu4tlJL81AK3jtygrpXkQ3V02WrT/ILuA1ZtoV7SjzlRGa+KvETtEfuQr0hGcJCgPl4oWBchHPTnqJBmo02Wsb+tnIs7oUrxNE2W3Ajoi8rMvyjedtgNiqQvH63dPbBE+TjCSETs/ZzSIYKBfx7KQXb6BBB11FLlxDvEmh/ljClrbaCSo4jbgvYPGmFICBshEL8ROhCkF6FSzdQAMW2h+fpittZwqZlbWGjBPrWSTl2hRyif2/gGCgXLwwUC7i2Uk/BwP1eIB+kTtVVyat9LTYFGLPyjaKupxNHMoIBsrFCwPlIp6d9LMwUNIHUv0oyBsLTYhV1hkNVin7iQkTTk7YLRt0dBgoFy8MlIt4dtLPxEAtJ7DXeiK6MoG4zzp4dyqf1yJIWhDDQPl4YaBcxLOTfi4G6n6QsbzJGaHsg6rNnCL23+zJySHdP2GgbLwwUC7i2Uk/HwMNPZkuoivTiJv8HeKQ3401qGCgXLwwUC7i2Uk/IwMNPA0poitzbvaYxJHVIgx0AmIhfiJUIUivgmdkoExNHok382ZPxl5lTg4wUB5iIWNVqEKQXgXDQJl4M4gzNiqzeGGgbMRCxqpQhSC9CoaBMvFKSBgGykUsRHqhCkF6FQwDZeKVkDAMlItYiPRCFYL0KhgGysQrIWEYKBexEOmFKgTpVTAMlIlXQsIwUC5iIdILVQjSq2AYKBOvhIRhoFzEQqQXqhCkV8HMBnry2uF6/fivwUD5iGGgExALkV6oQpBeBfMa6O0L6xpPw0DZiGGgExALkV6oQpBeBbMa6MnF9blL25Ovrc++DAPlIoaBTkAsRHqhCkF6FcxqoMfrx16vfl5fn4eBchHDQCcgFiK9UIUgvQrmNNDdAvQFz6nszCRoNLuEYaBcxEKkF6oQpFfBnAZ650KzAIWBchLDQCcgFiK9UIUgvQrmNNBbh0/ceOtT6/W5z/WHHmwxjBgAAEA8hhvoS81d+Ge6QzBQAAAWgoEGelw9wHRje/Ia7sIzEuMSfgJiIdILVQjSq2BmA22Wnke4C89HDAOdgFiI9EIVgvQqmNNAbx22K89qMxQGykQMA52AWIj0QhWC9CqY10Dbu/D9CxjocGIY6ATEQqQXqhCkV8GcBnpysV2BHq+xAmUjhoFOQCxEeqEKQXoVzGmg/d7nkboNDwMdSgwDnYBYiPRCFYL0KpjVQG8drp+6hLvwvMQw0AmIhUgvVCFIr4JZDXR7fFg/BnrW+URndmYSNJpdwjBQLmIh0gtVCNKrYF4D3d5+aWehn77kHM/OTIJGs0sYBspFLER6oQpBehXMbKA+ZGcmQaPZJQwD5SIWIr1QhSC9CoaBMvFKSBgGykUsRHqhCkF6FQwDZeKVkDAMlItYiPRCFYL0KhgGysQrIWEYKBexEOmFKgTpVTAMlIlXQsIwUC5iIdILVQjSq2AYKBOvhIRhoFzEQqQXqhCkV8EwUCZeCQnDQLmIhUgvVCFIr4JhoEy8EhKGgXIRC5FeqEKQXgXDQJl4JSQMA+UiFiK9UIUgvQqGgTLxSkgYBspFLER6oQpBehUMA2XilZAwDJSLWIj0QhWC9CoYBsrEKyFhGCgXsRDphSoE6VUwDJSJV0LCMFAuYiHSC1UI0qtgGCgTr4SEYaBcxEKkF6oQpFfBMFAmXgkJw0C5iIVIL1QhSK+CYaBMvBIShoFyEQuRXqhCkF4Fw0CZeCUkDAPlIhYivVCFIL0KhoEy8UpIGAbKRSxEeqEKQXoVDANl4pWQMAyUi1iI9EIVgvQqGAbKxCshYRgoF7EQ6YUqBOlV8J4MFAAA4JQDK9ByXgkJYwXKRSxEeqEKQXoVDANl4pWQMAyUi1iI9EIVgvQqGAbKxCshYRgoF7EQ6YUqBOlVMAyUiVdCwjBQLmIh0gtVCNKrYBgoE6+EhGGgXMRCpBeqEKRXwTBQJl4JCcNAuYiFSC9UIUivgmGgTLwSEoaBchELkV6oQpBeBcNAmXglJAwD5SIWIr1QhSC9CoaBMvFKSBgGykUsRHqhCkF6FQwDZeKVkDAMlItYiPRCFYL0KhgGysQrIWEYKBexEOmFKgTpVTAMlIlXQsIwUC5iIdILVQjSq2AYKBOvhIRhoFzEQqQXqhCkV8EwUCZeCQnDQLmIhUgvVCFIr4JhoEy8EhKGgXIRC5FeqEKQXgXDQJl4JSQMA+UiFiK9UIUgvQqGgTLxSkgYBspFLER6oQpBehUMA2XilZAwDJSLWIj0QhWC9CoYBsrEKyFhGCgXsRDphSoE6VUwDJSJV0LCMFAuYiHSC1UI0qtgGCgTr4SEYaBcxEKkF6oQpFfBMFAmXgkJw0C5iIVIL1QhSK+CYaBMvBIShoFyEQuRXqhCkF4Fw0CZeCUkDAPlIhYivVCFIL0KhoEy8UpIGAbKRSxEeqEKQXoVDANl4pWQMAyUi1iI9EIVgvQqeE8GCgAAcMoBAwUAACgEDBQAAKAQMFAAAIBCwEABAAAKAQMFAAAoBAwUAACgEDBQAACAQsBAAQAACgEDBQAAKAQMFAAAoBAwUAAAgELAQAEAAAoBAwUAACjEeAZ6FZAGKCQeUEg6YKDLBRQSDygkHTDQ5QIKiQcUkg4Y6HIBhcQDCkkHDHS5gELiAYWkAwa6XEAh8YBC0gEDXS6gkHhAIemAgS4XUEg8oJB0wECXCygkHlBIOmCgywUUEg8oJB0w0OUCCokHFJIOGOhyAYXEAwpJBwx0uYBC4gGFpAMGulxAIfGAQtIBA10uoJB4QCHpgIEuF1BIPKCQdMBACbzx6EGDd/zMV3dv33zyoHv/U9X73YG3/75R4MqzBx+YItFhmK1CMX2s8xW+8tzu2APv/73pki7CXBW6euV3/8Ku/3/yb9RvtPmiXn79uSriL/YKUUdmABgogX4CHhy866v6BD04qOV3DHRX4F2zkr3GbBWK6WOdr3/BtXj/vGSavULvtOZL9/LKc50iD3yoOeMemQVgoATeeLS1wy8/Wq0slf679+++Shjoi2//Sw/80p6THI7ZKhTTxzp/9c0PHjzwM3969eo3fnduv+hmqtDuF9a7qsX+lz9oz5f25S6gVuTqV3764ODDV8kj8wAMlEA/Aa9erpY0mv5vPFq9tA30zSff9aV6pMwLs1Uopo91/uqLvW1+/YPz0mmmCl3uOvzNJ6uFhWugLx68s9tNebWJdY/MAzBQAmoC1no7+tsGevngA86idAaYrUIxfazzjat2RWd1qTBThV7tf029aF4i9AIpFRqPdY/MBDBQAv4J2qxobLd8cSf4i3O67mgwW4Vi+ljnX9Xv8L04q9t9M1WokaGHY6Cv6tcB36j+c4/MBDBQAvol4O5Vr/+VL5F7oHX45TlddzSYrUIxfczzV57Vf7fNS6eZKvTmk+2GZvfWNFBTkQrukbkABkqgm4DVhPyAeZf3Xc1zM4aBvtoEzei6o8FsFYrpY543ldGv5+Vjrgp9/YOVGD/51xsTtQ3UnSsznD0tYKAEvI/JvONDxHOgV55t98XndG1YYbYKxfQxz5tqwUD3gitf/qB6bMw10Pb9q41IHyCOzAUwUAL9BGweBG7UvfI7B91vSXtK1ts31r7PDDBbhWL6mOexAp0IX6keprfuGZgrUM1A7SNzAQyUgNpDq9Hp/2r3gJppoK/2y52ZbePMVqGYPuZ57IFOh68/Sd2FNxWpdsDcI3MBDJSAZ4LurtKbF4aBajtws3rE8PQZaK+PdR534fcMbc3f3uXr3zcXAMY991oe98hMAAMl4JugO698t3GgwuVO+pk9YngKDbTTxzqP50D3DG09WRuo/d5UobZL98hMAAMl4Jug3UWiYaD9A6Cz+0aR2SoU08c6r33KBZ9E2gte7e8HvFj3d//Zom6OaJ87+npzyD0yD8BACXgnaPUZ36+aBqq9ntVH0K6eRgNt9bENtPucdfVZ+HfO6BbSbA20eg60eiDi6881N/be2PX7/7j7+ZUPts5aKfL++shzBwcPfJg8Mg/AQAl4J2g1EswHDz+sbd7sTs5H+Kun0UBbfWwD1b7pB9/GtBc0z4Ee9FZ4uXsuortQv/Lb/RRqv2PQPTILwEAJ+Cdoc59CM9APabcPd79EZ3x9OCOFYvo4BorvA903rnz5p6vncvuPIzXfD/oO7bs+v/G7f9GIoI7MADDQ5QIKiQcUkg4Y6HIBhcQDCkkHDHS5gELiAYWkAwa6XEAh8YBC0gEDXS6gkHhAIemAgS4XUEg8oJB0wECXCygkHlBIOmCgywUUEg8oJB0w0OUCCokHFJIOGOhyAYXEAwpJBwx0uYBC4gGFpAMGulxAIfGAQtIBA10uoJB4QCHpgIEuF1BIPKCQdOzNQDc7NP+nIiM4i3gsXgkJZxETCsnoybEaPEPphSoE6VUwDJSJV0LCMFAuYiHSC1UI0qtgGCgTr4SEYaBcxEKkF6oQpFfBMFAmXgkJw0C5iIVIL1QhSK+CYaBMvBIShoFyEQuRXqhCkF4Fw0CZeCUkDAPlIhYivVCFIL0KhoEy8UpIGAbKRSxEeqEKQXoVDANl4pWQMAyUi1iI9EIVgvQqGAbKxCshYRgoF7EQ6YUqBOlVMAyUiVdCwjBQLmIh0gtVCNKr4D0ZKAAAwCkHVqDlvBISxgqUi1iI9EIVgvQqGAbKxCshYRgoF7EQ6YUqBOlVMAyUiVdCwjBQLmIh0gtVCNKrYBgoE6+EhGGgXMRCpBeqEKRXwTBQJl4JCcNAuYiFSC9UIUivgmGgTLwSEoaBchELkV6oQpBeBcNAmXglJAwD5SIWIr1QhSC9CoaBMvFKSBgGykUsRHqhCkF6FQwDZeKVkDAMlItYiPRCFYL0Kvh0G+hKRz7vyntq5UNBwpHiWXpm5AUD5eKFgXIRz076CQ3UO9VjiDU5UnibWbtb3ZCybcLpFFyIak/0ZASYRWMTS1UI0qvg+RlosW1wsJDEbV+W1rCXXolqXzB4MkJP9SyCgXIRz076CQ3UwGi+kQ+9d6IRgTYEmzXSngP2QLmIhfiJUIUgvQqWYaADm5xjkFuvrRG9U/2fYp4b82xOPtFUYKATEAvxE6EKQXoVfCoMdOyuTDFPe1U53DnzE4aBchELGatCFYL0KhgGmsSbYHwCEoaBchELGatCFYL0KhgGGgjNWjUKSBgGykUsZKwKVQjSq+DJDLTsEpeGt8mclQiCX8+MIjBQLl4YKBfx7KQ/JQY6FtK6cuoskxDVvmDwZISe6lkEA+Uinp30ExooZ5MzbONUDCq/T+ISnodYiPRCFYL0KvhUGKiErpSQMPZAuYiFSC9UIUivgmGgTLwSEoaBchELkV6oQpBeBbMY6J0L59tXJy8drtdPXYKB8hHDQCcgFiK9UIUgvQpmMdCj9fnOSdcVHnsdBspGDAOdgFiI9EIVgvQqmMFAT47WnYEerZ+4tL19cf3EDRgoFzEMdAJiIdILVQjSq+DhBvq959edgd46rNeedy6cfRkGykUMA52AWIj0QhWC9Cp4sIFeX6+ffqs10Ov9z2dgoFzEMNAJiIVIL1QhSK+Chxvouc9tj1vjPFq/UP/s3s/dQHOeS5eQMAyUi1jIWBWqEKRXwYMNVDPMk4vtpfutw24T9MEWGWQDPm4zGxT2MwAAgrFPA53aw1IQ6Km5oVBZAACSwWeg9oNM7trYO9XHXnSz8FKfLc8g3qNzmr1qtM5RSMhlUU6shIRxCc9FPDvpRzNQ+zmm7MwkaBTxuQHEEgYVDJSLFwbKRTw76edloD73yuzK4Los77uVIgl7c5AwqGCgXLwwUC7i2UnPa6A8d+GzHCy+MBxCHkzYrm5ugwoGysULA+Uinp30zAbaPf+Z8hzoQGssKE7QhM9GuzInYbPbk9TJpzeIo7FCp+fsZhEMlIt4dtJnGOifdfiO30BzPokUs4XiJkc8h7krYyYnBVTrhE7P2c0iGCgX8eykTzTQH/y6NhV/7E+8BnpycX0On4VXYDE9fxLZnmm1Tuj0nN0sgoFyEc9O+jQD/dFH9HkZMNDtbXwbEzsx9kAnIBYivVCFIL0KTjHQa6vVfT//hQ5/9F2/gW5vv7Tzz6fs9eeCDDRpPShiUMFAuXhhoFzEs5M+yUDvfmZ1P+2s6cjOTIJGeQlnXJYPTTitqsj1PAyUixcGykU8O+mTDPRHH7nntwQZaKlhxHgT6SMl0njJJNLdsABER0idnrObRTBQLuLZSZ9ooMS253gGOqqPjIiC1pU2OqBnUhJtrNDpObtZBAPlIp6d9EkGevczY6xAi40qrcnF9Jzwdrs3emAlMFAmYiF+IlQhSK+CEwx0e231iCADBUoQ1b5g8OSMs3F4ZSQMA+Uinp30aQa6W4L+Agx03ohqXzB4csbZOLwyEoaBchHPTvokA7372Y+tVvc8/PEWP+c+xlRioAYGusNAZ2bpyiyNMpLoeJOyxyU8E7EQPxGqEKRXwQkGaj5HTz1IP9hA85tcbI3LGVSRnoCBcvHCQLmIZyf9fA3UCC1Y0CXxznhQxTsEBsrFCwPlIp6d9EkGyoHszCRoNLuEO2LTM31LcanTc3azCAbKRTw76WGgbLwSEq6JrRUnLuFLiIVIL1QhSK+CYaBMvBIS7jcz1BHsgRYRC5FeqEKQXgUnGugP//Ch1eqehz5BfBnovg007faR3zdyeocl4YHEbqy/ifaB0IYwDJSLFwbKRTw76VMN9Fo/XQsfqXczy/JBYCii2hcMnpxxNg6vjIRhoFzEs5M+0UAr/7z34Y9/7MdXpQ7qZja1oywMUe0LBk/OOBuHV0bCMFAu4tlJn2ag3z+zetsX61c/+Myq7HPxbmZTO8rCENW+YPDkjLNxeGUkDAPlIp6d9GkG+srqbd2nj0q/G9TNbGpHycDsEiYQ1b5g8ETOZ+QS4+Vp9/z8BAa6f2J+AzW+jen7Z97G81HO8jkxU+jdPmnttPY5g2f/6e8do/lJ7NeHEQwD3T8xv4Ea3wda+OWgbmZZw3lYk1uGWBXFk00GtJ7wnA1q7/YkY2JDf3cWSz8jUcnWwUD3TizTQF2kjSqWqrY6U06t5bNBHAp7bWh1+886vVmBI1NIP0Zbgf3C+zeRPtm/ubliuoSv0Q2egb8z2Aez+l2k3rNXsldEf3n2LfZpVFxVQi6U8knR2csQH2lyt6WUGthhWuuSFAo2ODUUK9Ai3hQDHfkmkp0Tz6DMHLzk8SZhOksX3riE6sdvdlT7jSNRpHz5zZ5IR2q85a3zENvBGT2YmkFZKTphGOj+icd5jOm+P65ffftneR9jMt6wD2UT8XL1/9SZMLEiD1WZ3FBHo9QiebTJBsqv0NKQ1n/EqIKBTkA81oP0q4ceeqj6Ie1B+rwmc9U6KsZINqq9O3g4qweiiE5PV6EYYKAFxKN8lPObZ1qVS/+2h5sZ59jL68qEccyZ3GDY/RXpP/tsovYbR6JYRmWDMpRUpEKKOLlImCdcfYyeZWBTrYOB7p94FAPd3v3Wx3Yr0Id/s+QGEm2gPTxDiGMA+iqiSplH/JGlGelHu57Qj2VzUoe3Wx9TVHtVPhUFgzKYUAGv+9yWL7A65yfWijf/R8dqJqyE0xSCgU5BPI6BDoUnM2rwFA9SehAGWL3nPZmlE9tFO64uoPD+i8uYHukgz0BTcmJ68M44ewAAIABJREFUwnPokwCe7DviNBKqI7IbR2S1NQ5E0oaBTkA8FwMlBk7ugOxemOsuqp0F493hKyA2YogiNk2KH6pwXwp0ks7RqIHGughgBTG6YKATEHMa6N3PVn+Dc/e/Dqa/ymkMmuSRZZ9JGYzqWNoITh/jzcEwK1WW3LmrCenqqfZ79HQOecNhoLJAygkD3Tsxp4H+6CPVn5Ab54/KpQ2p4YMyOTAzOV4MqTYkPhVEa++WZ2oakIbo9KQVDgEGWkB8igzUP8yGD1cP8cDseqr8mq0DhVVvfa2Iau8OnsIUFojIwO4PbnIeG3AkchWKAQZaQDy7PdAgsoIzsCFTya2KP7nsDiogprV3Bw9jxUwfth2tdyQgOj1dhWKAgRYQny4DDQ+57kUOsa97GPKRjKj27uCJkY04i9KawtxFe4XeYPdI320w0L0T8xvo3c9q942+/7F/m/HLRDrkDDd/Ud/JxEr4kdq8YPGtemmQZnXgYAMl6sx5KsjP4m1KuJV9I1IowzfmKDD5CVFv+fTMTwwGWkDMb6B7+z7QWJN9gz58gWiTpM9z9dCzlyGcsBWtdTsZ6Gldl0J43qc1SedNNNDSGhM7mWT01mlHFTy4alThy4gYUgF6aqxSJdPap2UBA90/8cgG+v0zYxhorMnBSOpzLv4p471P7UbrH3MhSjgJh2s2XhCNT/n14AkJttxXJtVAgXFgd3RUIlehGGCgBcSsBmrdgK/B+X2g0SYnjcJEA21A3afuXtkkWy3KX0W4brOunKdM6dC0KDLS6uARDNQp2dVVwLU0RCVyFYoBBlpAzLsCvekK/UknaLiB7mVQjlWJv0ZPMzNvp6VGqi5OymsMAwXKQYwXGOgExLwGevd//fjHP3bmnof7zyH9/B+X+Oc4d+F9A9E7IFPq1Xsntap9wZ8/JT4V4Nc+u3zJTaRx4de5S3iixJJA9TAMdP/EI++BFsLNrHhUJZdNZvdVtCfHz0Odip5Pqfh5BgqMjahE2QrDQEuIR36Mic1AawSGUHGTuUavdwUar8TXzOalJ2FPC4J/4SLcE7FeYzFQsqF53ZNZXDi8DTJ6OFyOlChbYRhoCfEsH6Qfp8nF495fOL0CO0Z/739IxnhP1RqubDwDpQi81G6CBYM92FDfeflweqI7QfUEDHT/xGMa6J9FjfL2L6/X66cuZRmolVPWcPQ22UufsqDzDnYSWQnTbfD6ZTq5tyd8iBporK3EHqg6YIQPeN5dY4s1Pt5iT11UaFpdgZSy4EsYBrp/4lEM9O4fvudP6oea3vvFoH/eOlxXOPtysoEabyZAXTuVQkpXDquW4kmrZGPv23aH/b9KotpvXIl4mpraEaGAsWo3q9lHJa4z+3rckSiiEFU+IxQGWsSbZqA3z9TfwVQ9FXpP6Cmmk4vrJy5tb+/+v5FkoJvAXlB4KqtXfGPbuZpKfO6KSjhQycb2NPusrZHHYIm3sfaZvLHpmdV/+0bXiLH4Q/sI44CSHga6f+IRDPT7Z9rH5//lr58J/lnjW4ePvb77ceeCswR1M4sOHjpjK5wY7b5CiQNYKx/dW01J2CzUhioGfwcYvFSQcyx5Yja8szbQCl3CU+eho+88vQuT+jMqkatQDDDQAuIRDPSV1X1fbF/e/czqfr+BHq/PVz92C9EXUg00r8lUkdgoJKIit4xU7/iZEhOmS26VKYazjvA6Zad+jIloLpCIqETZCsNAS4jHeA5UW3UGPwufswJNa3LaOPOeTPM5XyXe564CCYfRFrfWTeEyQV47cRl34UMZ0t6REnXKEZXIVSgqcUYoDLSIN81AU7+Nqd8DPd8debCFt0gA1Cjzx3h3w9K59R+BUiVtoWsexuTQhcBQ1bgJmknmNSLK5z2Xk10x0jpncE8Dk2PoCnR78lp9F/7p/h6S30C9QyxtCNKn0waw/3y8lL/tyRhtwgTm8OjTM1R3GegaQlXtJy+9JvuQehnLy82wvO8BKfDugd5PvnZx6/naQM85D4K6a2OekRxfdGtxer2R+HZI24diJcKB2sI/fD6hUk+859lMOglHIdk3kfaVkd4RwaA+wPjGwXA8PQmSJCLKR4BL+ALiEW4i3Vyt3vud+tUP/yD4bUy3DqvF524ZmrsHSoy3iNtmNFkrEB6vgeroQt7pFamH6QFTt4k5e5ijG6he11CupKoGFd7UO+bdIdJA67dsv/md6mMSpQ0do3xGKAy0iDfJQHfLztXqnoceeujM7mdoAXq0fqb9ed46482MHMnsTfbWklQkjdDr+LkJW6USzcdL7E+iwEANAm9UOMlwkb4js4gjNeoJE52z0n+1BkjMlwmVlmZKSuQqFAMMtIB4DAO9+/lO5Xv+84B/nlxsV563Du0n6d3MooOHt8l9RTm8WWM+cns/LWEq2JufS77Xj3IWI5YYS93pxG4xD4s39W3o1+2QhGGg+yce57Pwd7/1sd0K9OG/E/xaphID3X+T83kHTU+yeNBsyxOe/DlQX09Rv4r8ibmHsurjyXvviEqUrTAMtIR4HANNQ8El/P6bPBJv2ieRSmZRTg77MdDsxBLvHxK8kQ6K3uxJ7vRBDBnI2OmBgU5BPKWBHq8LbyLts8kj8Q7dG+DgHdFAjaJjGkwIwQYHorrglG5pKNyOHEzchpZPz4LyI+UlYXLK6ImIgd797Md/7rvV/zpC3658fd3gGftEdmbRBV1xkzNCT/WgihqogYksU8PgBqf2ZFWZw+tLIIe4DoWB8vDK6ImIgf7oI9W3MFl/mjP49z3+vPo+0E87j4FyG6g5oxKJV3FeK4VTPahSDdTrZQMbPNg8fcT+4NRAt8qgf8JAuYhhoD5kZxb7Dg19XqXfhQ/zOimc6kEVNdCYhQluMJ1yOrHd7LB/wkC5iE+bgfIhO7P494GqAZ7z8A0GlYpNM1COxHKeZR3eYJ/pD0k4HJ1BDAPl4ZXRE/MzUGtdYHzuLlBCu9OakcKpHlRRA+VJLM06C3/FdQlrpXu5hxno1sw+Ep1PnBgMA9078ak2UHswN2+jtz78BOEUTvWg4jXQiCtmmm1alN+D27hQwgSXHipDehjo/olZDfSHf+biO5MZKDG3mtkZnMpxEm8Kp3pQMRlokpnl8AZMNG6delmHY5vElp0wDJSN+LQZqHX7qMEUN5F8briJTCqS13eG6J3ihBmJp94DzbAslryqBmdVbeehv7CJ7bYZ53WekfYnAh9Co3oCBrp/4hkaaOrYSysea/KGekzF0zsJQQZxauhogyprh5fFQBPrymmEt3biOE1Mp2cRe6pPazY/yG6Dge6dmNNA7/7LL9T4/Gp1z8/9xhe+8F//+OqeT/xR8PPwBQZaNriKm9zXmdA7GbxjD6p4nyT1lZ6E0OnZ/YqjGmMfjG5/Fw2oTd5jA+N9CE2oQjBQFRw00Ba7hegj7ctvli1AAwbqG0F78KNoaMZ6buyEIz6QYw59EiNOT9thCi7h6VuG9lV5hLjAO/MTPm17oPEeO0UG6rRxBAN9pffP7fZa8AtBsw3UP6RH1yg6mXLcaDNuwlQmlDNst6nbE+MYqM/lw7f57Hs96pB+lpzMCQYaTNiHBRuoR8LhxCnBObG8Y7WQN8VA737G+JtIb2O8hA/M9vE1ClpN6PdvjDgeWrQgI2Anud2m+z63gZLmmQ6TyGTdeFsVTdiYGhltW6qBEv1MHEojjkyggpWtb8hEQVuPRqLY+A00/a9yZhposBP28UsuYkzbjDv2IyacMVYa4rSkCw1UjV/fRZ8v3j/yg74anC/xhLWCMNBoXrROTvfnbZx4g/ISjo8jPygDtd73oSMYaPJf5cwy0HAX7OUqgUyhF2fru3qOE0dCcxLOGSn6OiIemz09A0YXHtEJn4wso05z/C44GpvDq0ePRLxvA/V3vSVBmoHqr10ZV8QSNLZVacRmzIsUAy3br08x0Iy/yplhoLE5vqdtFicNTSntt3I+cTA0PTaxcoc4Xi7PQGP+FhGT2AP11ZL1CaeEujeTGKh3Z0qqgVJ9qR8yzsV+z7oUDv1q5X5ULPj5bXf7O2NqOMRu2e7ACAZ6c7V6X7PxeTf8VzkzDTSvyaFW5DTZeh+YjoF9oQTiUGhybFLNJHHUWlINdLCBEbyeUs3BwhwCm23d1Iil6U84Ek0mmUAcCd+7gZKnuuNaRMRAjbJb670W5DHQNG2bDbZgIjaxniM1+jredKQZaP1XOd/z8Y9//Md3P99X4p++m0g5TQ61YhCvV6nwnUlbvRESruvI09MqHTCWqIHG3GBYg01avZqCBodT9agXkjNRoXRClzgpeG8G6h8nmuutkgzUvAVY+5zL1W4MUAkn9eOmu2EaysQiNnKkdpF63nCckUSSgVYLzxaPeEJmbKBJvKmTMC58esINRbGBGnlTsakG6qtsSF4b/0QZ/htjEPwJR9KPNC5SI926fRloOA91ruseD4Oneda2QP1DpzMS7jOJ9E63axtumEZsZksEtb+/nVkf4k0z0O32h39YrT7v/UTRN4mcBgMlUTo/kokzE/YQ+5JIMdBQZUPz8nj00AanqaLVm6+gdcJ/5Zmbit26/RlocEdxZTlodoNtrn5N6yRsd4X/93e3XE1pX8xANT83t8Fit7pTDXQoVItTMQcDjRH75kfivRovrz+HrNbtbXqOxstHPMjwvGeNQM9gCKxz9qbQqt6qTHPQnpjujqTe2ph+rCVM9Q6dktq9ibVu4/SEUUjL0DHQ7ryXN8NA75auPpeO7Km5Gu8XGZAILtH2J+0A5lW9AN2GsutPaS9W2tnuXf0z0j/6m5VJRvVQpM9K+lRvhJ5hfdxJO102f9i3Plp9DdOP/pNPlHwMabvUFaiOtEk4LGGsQLmIjQcwoojcU9G1HesxJnL0ZNyrrIvTA7AL6l5sukttq3j66DZe6tm3P608Is8zhLLug+0GO9tH/TvqmWWqc9skkgy0uYm0M9CPrO4r+i4RGGg5MQx0AmIh0qcq5FhUTl7tLwF9a5KO6l60l9paYWLvSf+NYXuoYaabfq9xY3JpVfvStlIjw5osrKLkvonjqKoan4MmGugrq9V9/9mZH/uTu//ValX0UXgYaDkxDHQCYiHSpylErvLS82r8c7vxOai7HGs/BWTZZf1aW5Z2bbA5KlNTifYLX3XWsbdQVkZlZJjbE957Q6bJq2Mbn4WmGejN1eoX2g/Bf/MM14P0MQiYnrNLGAbKRSxE+phCKwJ2XsH1Wc/RPkhPBLv0K+0auA/p/usLmQ22SXQH1RezfajhoWRWWxXi74LVxjXQvgJvd5i9FnDQNAOtv86u/RYR5q+z80PA9JxdwjBQLmIh0pcYqDbNt8aaioZhV4SDage0GGMJZxDYhdRuspOtGesxw/bkRjfsxj/V7qlDrWXf+KTVa5tuKR3sx56q++H2XpKBNl9n1xoo45eJhCFges4uYRgoF7EQ6csMVK3+2jehLcLOgLbKiqzzTnUbxz/VTuHGNDr9Xg+R8Mbwz41GYl/0u46mFfTm3C6YN90T+qoZKqXYXTCnF3QkGWhjna2Bcn6dXRACpufsEoaBchELkT7DQMM24KuhtcONFriyLNNTn7N6a15v7NPazfI+2rP34CTrNqKPM3zabqM60VWsXe4bWw/dey3H7cqgCzsoDJSNV0LCMFAuYiHSpxqo+Y4yJw/amzZGpFbCKekyrsxwJ0AlbF/e2ymu2keIdErHP91rdicLVYdaaPZN23SGSXbQqknYOea7h5R6CV/dOGqd82bZbXhX+xgETM/ZJQwD5SIWIn2agdrvlcNsLIOwYfhnz7bSXhBFrDCN3arcStja6zR2BOq3aqEYQH+d77qf+XpjXaJ3dTjJK5Jmu3RL9IXRTK9CvptI9Y2jxkB3ZoqbSPslhoFOQCxE+gQDVa/bAz7jIeCxkmCpYHhfTBXWEtZPWlwb8/I50pYa5gOm/uSMPVndgLsC/c/mZf+lABRXWCGfgX7/zOp9360N9Ac/u9K+nR4Gug9iGOgExEKkTzBQa4IHHMci7wskeKJZynDCWDl9BapnaWavrq67bdlYexpiN0s6ekvmb/jnyrBUl5hcj6cZ6G4Julo9dOaeh6tvZCr7PrvssSNhes4uYRgoF7EQ6XMNNAy3pMaQcPWsaGzS7nUyBUG16f0zwT4r1D3hmF0gdrOxXXxl3UIzW+DZKPUr5P8s/L8403Es9ftApyOGgU5ALET6JIV8ptHnpYzBKGGUdddzGX7YRnu3F32sevobff2pDoSWlXnpmZ2l2PU67XCaw6tQ8PtAH9oR3PveL5b5Jwy0nBgGOgGxEOnjCmmz2/WMrQpyTNMq3vA2J0r8SVmM9sM65maqJUHcGFoZllWakaKmctLyde7lO3vEMYXwfaADeCUkDAPlIhYifUyhdBNx/EMvv6F2FFOMaaO/tc4n3m4i79XYeWbdu+p8caNeuV+x1IZ35wmP1ancfEiFvB/lLF54wkCHE8NAJyAWIj2TgRL+ohevLMR1GD+9ew8of9nq5W4zs+/vuKA8kbqtVme7dWtsyM0bWqH7+Fp2PoW8D9KXfYEIDJSFGAY6AbEQ6RkM1L1u7Z2Ach371rjjOL3luBf87i0as6h1zGFWmbm7n0GH80GZ49bNp6F3FufWZ1rpYh6Fgp9EgoFORAwDnYBYiPQMBmoZQGYJ495L86Lxo/a1vk9oLOOs7BIflzKz3FhMiW3WgigX9Jdr/lfPl7r1RRQKfpkIDHQiYhjoBMRCpOczUN0TKMsJFe0L9T+3Os1Guwze9M/zOwlujHC6Jn2huLH8z2h0uOnBzYewkXc9TOYaU8j/SaS3fREGOhUxDHQCYiHS8xlo0GwoogT2fl2q/a88ms4wzGrcydqoB+pXK+VeXZ3WHmhyb2wId9R9u7udZtGpJvkV8hnoDz+/Wt378Mdb/Bw+C79XYhjoBMRCpE81UNen0swkfJsmlWOlu6jKLEidWe9mZTZ54/7tulxGvfvivys2/e+GgEL+m0g68G1M+yWGgU5ALET6VAN1LIEfKeS6yfBV3PxrSNU1uLZXSSWStFWan0tYIQYDPXntcL1+/NdgoHzEMNAJiIVIn2WgqTdZGEFUZ6RQP2Cavh5OrKl9MilsoIGOKO+jiELDH6S/fWFd42kYKBsxDHQCYiHS5xlo1DlGhV1x7DaPN9VYA9piW/LT+/Zzne2L9E/6R2oOKjTYQE8urs9d2p58bX32ZRgoFzEMdAJiIdJnG6g5zf1OwGEnFK35PKc3znsuJ7Hm25e1e/Sx2MGIKRQx0D+LGujx+rHXq5/X1+dhoFzEMNAJiIVIn2OgxAM3vnWXVVZ7bt18ojPZVawjGaVNBK7KA9V70hgBEYUCBvqtj1bl7wl/pnO3AH3Bcyp77EiYnrNLGAbKRSxE+hwD7W6uGM9e0le5G9c+h/rKaqU/6KlzZi7+Nr0Xmkn2Lc7Id2MmNhgxhbwGevczPcf7Ag8x3bnQLEBhoJzEMNAJiIVIn2egyTZgvBvmKSSnJ2ZYBW2LN5avxrMqWdTGNkdohXwGWvnnPQ//xhf+wcfOrEJ/0ePW4RM33vrUen3uc/2hB1v4CwEAUIiAC8TOU/HxoAzCWNHugN6YQA5dzLa2KYMmpan9eTvSLawOOL0c1YM+fG21+olm4Xn386vAF4vsDPSl5i78M90hGCgAjAZr4puvnACPpdDvtoZR9VR6HJUEXYcyJKIuvTUGocW9bVJyndhJw02p6xHihL8FTj/H9SCP7hag6nvoXwksQY+rB5hubE9ew114RmJcwk9ALET6mELWjN8QrwqQ/HCRL4+SOhsajS6JOe0evB3eZ77q2xVsnpFRQCHvg/Tal4l8/4z/Qfrjbul5hLvwfMQw0AmIhUifZqD6KzX5UwzFdJXVKnvPUKt6+N0o/RaR1UQill44BopYUTq7U5PltE45WqGUr7MLfbfdrcN25VlthsJAmYhhoBMQC5E+xUA35HceRSxlY/www9WJZEfctKtHL6tzkEpKP6k10G5C+6h8/0kk97dHWsYb0z/dz3U572IKpXyd3ffPvM17H/7WYXsXvn8BAx1ODAOdgFiI9AkGan/ohv58Z+biML+EVqaksMUTS7lrurlcJSPDFO3LcOhKe7IqqJD/JtL95GsbJxfbFejxGitQNmIY6ATEQqRPMFDXQRIXoTGHMYunP6aUFrxSbpQU3BawD8QyNI77+ic13SGPMXWPf14LfpdIt/d5pG7Dw0CHEsNAJyAWIn2agboHgj5CWhBRzmWvWXTTcoMdTqK+rqSZdBKIlpnvrCYYGdPZkgU98RGFfJfwn62e/3z4E1/4h9XP9wS+FfTW4fqpS7gLz0sMA52AWIj0CQZqFaGNxOeg/k8qkR8D6u6Ta4edoiEf6vcv+5LJN3wCJ0O1V4e8S1O1DRD0fCdzr0JpX2fXgF6IHh/Wj4GedT7RmT12JEzP2SUMA+UiFiJ9mkKU1Wzin8LRi9rWYq3LVEVGjR6GXATt0WqjOrONpaA+xrnR/s/IhOzekELDDXR7+6WdhX76knM8e+xImJ6zSxgGykUsRPqYQrTh9G/7/4qgkxl1beg/sx7mIRPmQC5tYDs4mmJEoeHfB+pF9tiRMD1nlzAMlItYiPRpBqq90Q9rsz5mHSGv8BTLNC0/3NAwVeiQxhk1Qk+SbQqhzQ2vQjDQAbwSEoaBchELkT5PIW2O2xM/6ElBi3DdKbbNmeg9RA1W/mRLQvVrhOYWborfe6mdzvUqBAMdwCshYRgoF7EQ6XMVMie5bgJR/0iB1mDriCecLu1mHWLRuYJxbrs9TyXQjp3QjJhCMNABvBIShoFyEQuRPkOhlbqjrOdFmFDApnxoK1hpxPpTkSHb2W43Bo0n82DVqn2hGumCuU1s/raya6gpCsFAB/BKSBgGykUsRPp0hbpJbkz1rXbO5ynEeR9USG2gkevplnG7NYJ8qZulnHC3aLje1P0GI7550fYwzWYDBsrGKyFhGCgXsRDpkxVa9Q8q6tN9q53WjEB3qX7ZFbIJm8bjQORRyo+0ZBwD046bj02FE9ASTM04CRvKvH0KwUAH8EpIGAbKRSxE+lSFVpp3avN9a0S0jmD5g3EwmpHfu5yzRe6lsu/eGc0Ll3WsTp3aFmRj8qQoBAMdwCshYRgoF7EQ6RMV0kxnY19pazGW1Sj7pO6qhBOjDhJcuY619T+MlUrhNFi/B2/y6o+BqdNdDzu/GciOgIFy8UpIGAbKRSxE+iSFtMm90ldsVl5+z6l/bI2YWGLuIdKgNrofJbhet18aLWKWI45pb4k2hfj6HnYWs1RHwEC5eCUkDAPlIhYifYpClpV0x9y8HLtofjTvFK/jNlRiJK+nDb5kCffqDNR1ULeITmwT0S8DnaGFKANdOSWI1sFAmXglJAwD5SIWIn2CQta01ncQ7bw0p7CsYxXwOZLC7z9uGxwCmrAO7g85pxy/NYhX9uau5Z7hXjeS0n6V2FFU62CgTLwSEoaBchELkT6ukO1cut24eenRmtOsbAP1OWjAP/23WQgO/Z2e2datxThC7VXS6fXvNhpxEvS1eEIwDJSJV0LCMFAuYiHSRxVyfWulWZJrAKTtOes5X/H+0JZ8YMjTBioHt5S+UHSWkMZbL7G7EbtpW1eoUNxBYaBsvBIShoFyEQuRPqaQxyP7F3EH3XQOE95bdZn9zm23wT220piM8v0eKF2VUav3gS6HYFOsEAx0f7wSEoaBchELkT5uoEQpj+F4sfLlZRV3F3e+enX4nrvquIyDxtfkRSrw9aRVmLqdFoR5cyoaDANl4pWQMAyUi1iI9GUKqSvtFAddeQ3UvsGvrqLpJMjKPAk31I5DG1fugWT8xHROpQrBQPfGKyFhGCgXsRDpCxXqrGabsAj135JpmYxL4dbYAos/tw3+WBfG2TB3bk+kwrq7HwuGgTLxSkgYBspFLET6UoVaN+q2FIOR4bxoj/MlQVRm7TmEqHW/sh00RuzNpw2Ox3oSDjsoDJSNV0LCMFAuYiHSFyuk213QQUP3tC0qzdL8STiVGTe1HVf0lzZjM5a2JN0AAw066N4MFACAPUMzPn9IKlNGpanJEKHm2f5NRv0JqYxHghVoOa+EhLEC5SIWIv1whZzdRQPqsPln4pwwe1kZqNQK3nb7CPo9fLt2xWstO/sybj2xnjDaMUCh4BoUBsrGKyFhGCgXsRDpeRTyeij1uSTCR4n9x1CtJNXKOm9Vr3jdC/eV+qETBTYdNhvLPwcpFHJQGCgbr4SEYaBcxEKk51OINjLy9cb1wAAxgZB7qgByX1NPhTbini562ys9YTMHJzbgoDBQNl4JCcNAuYiFSM+oELGsNAyU4vX55/AGh3hDrqkVDRE75MMS9jsoDJSNV0LCMFAuYiHScyq00m7J2xZjfjlcJnEkNLBQ9PDqDkiaqM/X+98KTkAsYT2UiPU6KAyUjVdCwjBQLmIh0rMq1FgKtUJbTWCg2bymj5Ie2h1ZrVbW74iEPYdgwj4HhYGy8UpIGAbKRSxEel6FNAe1j0tpcOR86NLevWmvnQ8Sm0TerQEyYRgoF6+EhGGgXMRCpOdWiNwfDOwoJhMHQkdQiPJR0lT7dwFibUkbSph2UBgoG6+EhGGgXMRCpGdXaLVyb383DiOjwTmxUfus0RzyEqsCvdf6N22JJGCgXLwSEoaBchELkX4khQwvaD/dLqPBObF9MGGbOkKnnT2AwGYGRQIDZeOVkDAMlItYiPRjKWRe5Wbzzk56j4eSy1U/L1agY/JKSBgGykUsRPrRFOqdI7Lzl03shsqQnrJQylSDa1kqCRgoE6+EhGGgXMRCpB9PoZV64Cefd57Sx3ZLG/jP0EnAQJl4JSQMA+UiFiL9iAp1955L8pqr9An+udFuTiUlAQNl4pWQMAyUi1iI9GMq1NyPL8prAdInmigMlI1XQsIwUC5iIdKPqpBhEEIanBM7uvQJV/wwUDb5JzXcAAAgAElEQVReCQnDQLmIhUg/rkK6JQhpcE7sXqSHge6LV0LCMFAuYiHSC1UI0qtgGCgTr4SEYaBcxEKkF6oQpFfBMFAmXgkJw0C5iIVIL1QhSK+CYaBMvBIShoFyEQuRXqhCkF4Fw0CZeCUkDAPlIhYivVCFIL0KhoEy8UpIGAbKRSxEeqEKQXoVDANl4pWQMAyUi1iI9EIVgvQqGAbKxCshYRgoF7EQ6YUqBOlVMAyUiVdCwjBQLmIh0gtVCNKr4D0ZKDALPPjgvHiXl/DiGrx34iG8MNCFQ+KgnIRYbMKLa/DeiWGgQDEkDspJiMUmvLgG750YBgoUQ+KgnIRYbMKLa/DeiWGgQDEkDspJiMUmvLgG750YBgoUQ+KgnIRYbMKLa/DeiWGgQDEkDspJiMUmvLgG750YBgoAADABYKAAAACFgIECAAAUAgYKAABQCBgoAABAIWCgAAAAhYCBAgAAFAIGCgAAUIjxDPQqMD3+2V9Zd/gP//5VQ5+j9QuUbHcunG9ffe+X1+uzT10ixb112PM+9rp5Ksp7u+L9WzfoUZNJbOR48tqu8OO/RvIeP/6Lf7er8uSf/MpffZ2MUjh5acelN/7W4RNkyrnEW70rdvh//+PynjxVCo0m0VCFjDcOYKCnGvkGerRuh8trTbGzL1NR+dOz532rKXaOHsd5xEaOty80756meI93J15Qr21uG3cuWCmcXFx7DDSPuGmINiP/t3VxT54uhUaTaKhCxhsHMNBTjX/2V3a+2cPQh5xGJ0frdrgcr8/uVgq3L9ID7tahdxxGeHfz74lLu6WIx4+yiI0cd/Pn3I74a7ShHK8fP+zmwdHj/kr6unZJ3tZm5PW110CziPWuaN/8B4U9ecoUGk2i4QrBQBeLTAP93vPrdrjsBnt9evd7nlquZE5PxVuN+xu+sExiM8fj1kiuk+P9eH3u+Zb5zoW/diEyi9os7lzopnq17PIZaA6x0RXtmywDPb0KjSbRcIVgoIuFbaC3q32jT9f7RrvR/r1PmVtdu9/hT7/VDJc73UA7Wj9DiGvPomTebkrthjU5LHOIjRx7YhrH6ye+1tV89u+1Bav9ufXjNeHx+pm3DtfnXu4SPt/+bBq/I/9V3x5oFrHeFc2b/9sy0MUqNJpEQxV6Cwa6XFgG2u5fna2G09H6b9ZvtNFx/dznnGmTND3TeU8utisGz45/HrGW453w0mI3i/5VeyF39Ng/bWLb/bma8Hj9i9oK5sjykKP1ee9NpCxis4urN//GNNDlKjSaREMV8vwiaQEDPdUwDXR3JfX0jWoTqhpER+tqE2n3u9dcFljDRV0iGTBnUQZv3vRMIW5zrPje+tR6vRvxFHaz6F9fbC/6zjdT+Xh9top9q96SO9av/+wkd4VvBAw0ndjoigamgS5YodEkGqoQDHTBUHfh/6PdO+Oy56jZkbpujR5ruHj2q9St2PNb63IqwnvU//RMz1ziNmo3e15qClLrsXqCXa8n9u7/Zha1K7fmyvJYv7Nhzc5++g8mNruixr9Zl/ak3noXs1NoNImGKgQDXTAMA/3nxqBrB5F9YWUOF2JwtQzaLDrJ4d2VrJYsr3meJ8knbnOsHlZpiD134Z+4cdxwPva6ovj//p//5fl1M4u0yafV20+3kIEmE5tdUcMw0Kye1FvvYnYKjSbRUIVgoAuGcQn/zy/2k3U3itpNpH4kUsPl+PAsve9vXMedZPFebyI9O/4FxE2Ox93Chn5sr5ol9eS5dXi+m+G3n2/JA7Nzd7RZUIUMNJnY6ooKxiV8Xk9qrXcxO4VGk2ioQjDQBcMw0P/zQub0vO5ZK1iz6E4eb/VkyKcvpeywpRB3Od46DG7d1bOkYqgu5ppZVC2lzn76V/+P9jpOmyXG7GyJQwaaTGx3xdYy0MyePFUKjSbRUIVgoAuGZaD6wI5PT9+11taZRXm85PtC4j7HviD9nGI9i3Z1VpdxzSzaLZ7O39iqjTA9Hf0W7/W17hEDid2mWwa6XIVGk2ioQjDQBcO+hNcu99oNK3s098Pl5Mj3YT671EkWrxk2jFjLsZ+1xBVZd3Q3e/736oGWehZ1c797yFtPr3u4sPqZYqDJxG5X2Jfwi1VoNImGKgQDXTDMx5i626PtRU39xr6J2w8Xz03YBubky+G93k0y372PHGI9R3XzmJr3NcNuCv9KNWWMWdRszZmzxPmYS+QSPpnY6Ioa5mNMC1ZoNImGKgQDXTCc50CfuLRtH9SrPuN7o/riCPMmhJpGgdnpPgyYzNt8Ovp7h55nWbKIjRxvHVZfzRO6C1/fHqnoteu4k6+tiVnUfGpb/6B12ECTiY2uqOE8B7pUhUaTaKhCMNAFw/ok0nH7CMrTW/WxkadN2drhot0doIaPdfmXztt/CMQz+XOIrRyPtc/EODhu79Oum6cGm6epm0S+VpW2Zslt+6t+IgaaTGx0RQXrk0jLVWg0iYYqBAMN49UDDR+oD33luUcPDh54/++pIPPIG4++66vNq98+OPjwnvPNAv1Z+PqjIEfrF3brhmqxYaAdLsdrY+jboD8QncC7Q/VpFN93QmYR2zlqn8p20Myi3dKjWla1z7JUN5t3iXQ3GYz429Uz309p8zFsoOnE27CBLleh0SQaqhAMNAzHQK882717f2uT9pHeQF8V7p8WRtMaABYKGGiNN598++93Lz948MDP/OnVq9/43UcPGp90jnQGOjP/hIECADNgoDU0A33xoLs+//oHD95NHmkNdG7+CQMFAGbAQGsoA33j0d5Kd68f+CX6SGWgX5qbf8JAAYAZMNAaykBfbW8k1XixeuMeqQ308uz8EwYKAMyAgdboDfTKs7otXt5dvLtHagPd+eeH9pzkYIymNQAsFDDQGr2BvvlkdY3eobp6d49UBvqlRw/0w/PAaFoDwEIBA62hGaja8OwM1D6y++/g4IG/0N9amg1G0xoAFgoYaI3cFehu+bn77917znIoRtMaABYKGGiN3D3Q6tDsnmKCgQIAM2CgNQruwlevZ7YNOprWALBQwEBrlDwHuis0s23Q0bQGgIUCBlrD+CTSO9vvDFGfRLKOdB/lnNs26GhaA8BCAQOtoRnolWfVJ9/f+fvkEXyZCAAAFWCgNfRnla4853wb03Oeb2PaWav+jJN0jKY1ACwUMNAa5sOe6d8HOq9t0NG0BoCFAga6IIymNQAsFDDQBWE0rQFgoYCBLgijaQ0ACwUMdEEYTWsAWChgoAvCaFoDwEIBA10QRtMaABYKGOiCMJrWALBQwEAXhNG0BoCFAga6IIymNQAsFDDQBWE0rQFgoYCBLgijaQ0ACwUMdEEYTWsAWChgoAvCaFoDwEIxnoFudmj+T0VGcBbxWLwSEs4iHk1rAFgoYKDlvBIShoECwISAgZbzSkgYBgoAEwIGWs4rIWEYKABMCBhoOa+EhGGgADAhYKDlvBIShoECwISAgZbzSkgYBgoAEwIGWs4rIWEYKABMCBhoOa+EhGGgADAhToWBrkbijUaPRNzGRpqVTzya1gCwUMgz0JWBBNsIxWm8aSnIMdBos/KJR9MaABaK8Qw0HysSqaX2keH+kN5+AAAmg4gVqH/N6VuF9cRtQHC5ttVriK3RkhJWxMmhOcR9pgkpYwUKANNBgIHaS073rNc2tPiA1RDLWr/FJCSsojNC02PNDMk+KSOGgQIAM6Y2UPqy3YlwraA7FQnc2IxhE80z0NR1bZCY+IXhrsL9XQQDBYDpsE8DdQ2gfen3hxXtKTUxsTLzwLUS34mSPYckD/URW0Wbt05soFUGcTQJAAA4MZmBpmNDeOWOmDAtT/GQdxHGHIFGvbUO0omEiI2Y/mWCi6tY+9mFQKHRtAaAhWKyS/hCN3WcieYzfSNuQ8piAv5j+Z1FHEmWIm6pnLyTlsFtAc+zC3YftK0DAIATM1iBhkD6Wv8mZihGUhs3YTJQNyQ/F/XSSsVpgJc3llKob3SMpjUALBSTGiinpaY4S5EP2QTaa/V8VC5ROEHCQD0NSSCDgQLAaJjjCrQnDtlFqqmwZxfM21MXXX0gt6SUYaAAMDLmaKCOSziGkecrhsUYDFT2GzvCIk+p2uVJamdKERVCtQ4AAE7IM9DxvNauRK/JMFA7JjefQAGT3ckor55oFjBQABgVMu/CExHj3IOyayXvaXssz8+a0lrqplRvdC6ftyLnMaZAGqNpDQALhbwVaD/9s8K9/lG/5ObOyiB/R2HrLWYwbvoujlPCQAFgBEg0UNbbTf01elYdkWzN1qQ1cVirNmRHbuzVqn4WBgoAY0OigXIgqbaSlNzmmC3kbGmAa0OtrYlPQMFAAWBEnFYDHRnEx/iJJ+PJgrndUNxxMFAAGBsTGChhMUOfsXeXXlnFeRH6jpS95dAkAgMFgFExyV34fTjIqVrwZqLpY6xAAWBs4BLexDb1QaX+ZULgxvN81LiAgQLA2BBtoP22YkGhfGwon5Nv/cRjTA1goAAwNuQYqO5eenCBg6V/PLKrIBRDPLCUl8446LLY+nKCgQLA2Cg10DsXzrevTl46XK+fuuRE5K9AzT/+ZvnEfLDZGLnvN3+ts2GgADA2Sg30aN0a6J0L6wqPvW5HZBjosDWdJIf15+L9Mx2Rp+9LHnsynqiCgQLAaCgz0JOjdWegR+snLm1vX1w/ccOKyV+BFmHsC+r2Kj8lkTL+SM/E2+cwEF+GAgMFgDFQZKDfe37dGeitw3rteefC2ZetINdAR/HRsewzJ9/wg59ZTQ4EZ7cUBgoAI6PEQK+v10+/1Rro9f7nM1bUnlagvBjvaaPUzYwwi/P5TfxNJACYEEUGeu5z2+PWOI/WL9Q/u/cKEQPd9Bt1EecJ2UnO1xGXV8OAyK+StOS0rU3iMBUPAwWAUVF6E6k1zJOL7aX7rcNuE/TBFkRdHfp3zX/b/uAqsAZUYd6IgPlYGcwX6c0oVBYAgGRMYqDaJM/1BYdva5y04oiCaeazH0QSGppvobQAAKSCz0DtB5mG7IHuYsPXpdTXCPuNRP72q7u/kX8PiyDFJTwAjAr+FWiHQTeRnK8/tj6ZtN1qD6lHHjDdsBmo8R2ggRqzeVXh0HdWZdPCQAFgXOzdQK05vdLujVh/3cfyTPN72LdGxFCrGQeDHdCi03nNX0r4m0gAMAkGGmjWXXgX/TyvZ/zWOE55AekSKmKAOTFb8MB0+HKAgQLAiBhqoN3znynPgfr9U1tKta99m4KkSbQv8wyFwaJ8lWjZJHzIyHq2c9MsxdX70s8KwEABYGwMNdCCTyLpFuY6mvYNSb3HmnZAWUSJo6zipktR64akOHwX0e0LrWRCnsTGR7yUWwUMFABGxlADPbm4Ppf6WXjHv6wprr7MuA0w/Mb2FGpZah/oeOn6CAb/X1mnTGkbSMUoFA8xU3fbSlXvz7KucuNg0EgBAMDBUAPd3h7wbUz2/LZsrlnCERbqOo7pVRa59mfWzQqdNWz88ahgwkY+Jo/RE20ZI2WbwMqjO7OxQT0o6gR1sQAAsGKwgW5vv7Tzz6fs9WeCgbrz2z6w6kxULxJwNg91z2ufWjnrwu02drVtEnuTWdmX3Z6e0N/HO8qs34gIpKnyBQCAFZP8UTkPiK/M3JD3s31/esNjH+bdfbOClX7GLq7MUH9lFCfgP2UXdF6EaAPYWNZKdULdEQAAsEK0gVoGp/nCduvaRPPWdasNcfXssAa8yc7Ib5E0a5NDvKLQ22iO7u4EDBQARodsA93E7s5QzuYLFoSNtvZ089U3bePYUv7p6WAAAFgh3EB1UDZknIuEe41MW64Zf9cuSsHxbaehtq3CK9FN38UrGCgATIEZGWjEqtJ5E00tVn+K46scnI9ZOakENgWI+nXiRP+EgQIAM+ZooJQF5vH6vTMph67CjNb5esJKP61V+tntNtk/YaAAwIx5Gmge8Vi8kybcr4K3yf4JAwUAZsBAy3mnTjh1y0FLAgAATsBAy3kFJJzlnzBQAGAGDLScV0LCWcSjaQ0ACwUMtJxXQsIwUACYEDDQcl4JCcNAAWBCwEDLeSUkDAMFgAkBAy3nlZAwDBQAJgQMtJxXQsIwUACYEDDQcl4JCcNAAWBCwEDLeSUkDAMFgAkBAy3nlZAwDBQAJgQMtJxXQsIwUACYEDDQcl4JCcNAAWBCjGegAAAApxxYgZbzSkgYK1AAmBAw0HJeCQnDQAFgQsBAy3klJAwDBYAJAQMt55WQMAwUACYEDLScV0LCMFAAmBAw0HJeCQnDQAFgQsBAy3klJAwDBYAJAQMt55WQMAwUACYEDLScV0LCMFAAmBAw0HJeCQnDQAFgQsBAy3klJAwDBYAJAQMt55WQMAwUACYEDLScV0LCMFAAmBAw0HJeCQnDQAFgQsBAy3klJAwDBYAJAQMt55WQMAwUACYEDLScV0LCMFAAmBAw0HJeCQnDQAFgQsBAy3klJAwDBYAJAQMt55WQMAwUACYEDLScV0LCMFAAmBDDDfT2L6/X66cuOcezbUOCH80uYRgoAEyIwQZ663Bd4ezL9ols25DgR7NLGAYKABNiqIGeXFw/cWl7e/f/DetMtm1I8KPZJQwDBYAJMdRAbx0+9vrux50LzhI02zYk+NHsEoaBAsCEGGqgx+vz1Y/dQvQF60y2bUjwo9klDAMFgAmBFWg5r4SEYaAAMCHY9kDPd0cebDGQGAAAQDoG34U/ea2+C/90fw8JBgoAwEIw/DGm52sDPec8CJp94Srhinh2CeMSHgAmxPA90GrxuVuGYg+UjxgGCgDzwFADPVo/0/48b53Jtg0JfjS7hGGgADAhBhroycV25Xnr0H6SPts2JPjR7BKGgQLAhICBlvNKSBgGCgATApfw5bwSEoaBAsCEGP5JJNxEYieGgQLAPDD4Mabr6wbP2CeybUOCH80uYRgoAEyI4d8H+ufV94F+Gt8HykgMAwWAeQDfSF/OKyFhGCgATAgYaDmvhIRhoAAwIWCg5bwSEoaBAsCEgIGW80pIGAYKABMCBlrOKyFhGCgATAgYaDmvhIRhoAAwIWCg5bwSEoaBAsCEgIGW80pIGAYKABMCBlrOKyFhGCgATAgYaDmvhIRhoAAwIWCg5bwSEoaBAsCEgIGW80pIGAYKABMCBlrOKyFhGCgATAgYaDmvhIRhoAAwIWCg5bwSEoaBAsCEgIGW80pIGAYKABMCBlrOKyFhGCgATAgYaDmvhIRhoAAwIWCg5bwSEoaBAsCEgIGW80pIGAYKABNiPAMFAAA45cAKtJxXQsJYgQLAhICBlvNKSBgGCgATAgZazishYRgoAEwIGGg5r4SEYaAAMCFgoOW8EhKGgQLAhICBlvNKSBgGCgATAgZazishYRgoAEwIGGg5r4SEYaAAMCFgoOW8EhKGgQLAhICBlvNKSBgGCgATAgZazishYRgoAEwIGGg5r4SEYaAAMCFgoOW8EhKGgQLAhICBlvNKSBgGCgATAgZazishYRgoAEwIGGg5r4SEYaAAMCFgoOW8EhKGgQLAhICBlvNKSBgGCgATAgZazishYRgoAEwIGGg5r4SEYaAAMCFgoOW8EhKGgQLAhBhuoCevHa7Xj/+aczzbNiT40ewShoECwIQYbKC3L6xrPG2fyLYNCX40u4RhoAAwIYYa6MnF9blL25Ovrc++bJ3Jtg0JfjS7hGGgADAhhhro8fqx16uf19fnrTPZtiHBj2aXMAwUACbEQAPdLUBf8JzKtg0JfjS7hGGgADAhBhronQvNApRAtm1I8KPZJQwDBYAJMdBAbx0+ceOtT63X5z7XH3qwxcDEAAAApGO4gb7U3IV/pjsEAwUAYCEYaKDH1QNMN7Ynr+EuPCMxLuEBYB4YbqDN0vMId+H5iGGgADAPDL6Eb1ee1WaoeSrbNiT40ewShoECwIQYbKDtXfj+RY9s25DgR7NLGAYKABNi8HOg7Qr0eI0VKBsxDBQA5oGhn0Tq9j6P1G34Ftm2IcGPZpcwDBQAJsRQA711uH7qEu7C8xLDQAFgHhj8bUzHh/VjoGedT3Rm24YEP5pdwjBQAJgQw78P9PZLOwv99CXneLZtSPCj2SUMAwWACYFvpC/nlZAwDBQAJgQMtJxXQsIwUACYEDDQcl4JCcNAAWBCwEDLeSUkDAMFgAkBAy3nlZAwDBQAJgQMtJxXQsIwUACYEDDQcl4JCcNAAWBCwEDLeSUkDAMFgAkBAy3nlZAwDBQAJgQMtJxXQsIwUACYEDDQcl4JCcNAAWBCwEDLeSUkDAMFgAkBAy3nlZAwDBQAJgQMtJxXQsIwUACYEDDQcl4JCcNAAWBCwEDLeSUkDAMFgAkBAy3nlZAwDBQAJgQMtJxXQsIwUACYEDDQcl4JCcNAAWBCwEDLeSUkDAMFgAkxnoECAACccmAFWs4rIWGsQAFgQsBAy3klJAwDBYAJAQMt55WQMAwUACYEDLScV0LCMFAAmBAw0HJeCQnDQAFgQsBAy3klJAwDBYAJAQMt55WQMAwUACYEDLScV0LCMFAAmBAw0HJeCQnDQAFgQsBAy3klJAwDBYAJAQMt55WQMAwUACYEDLScV0LCMFAAmBAw0HJeCQnDQAFgQsBAy3klJAwDBYAJAQMt55WQMAwUACYEDLScV0LCMFAAmBAw0HJeCQnDQAFgQsBAy3klJAwDBYAJAQMt55WQMAwUACYEDLScV0LCMFAAmBAw0HJeCQnDQAFgQsBAy3klJAwDBYAJAQMt55WQMAwUACYEDLScV0LCMFAAmBAw0HJeCQnDQAFgQoxnoBUefHBmxLNLeDxiAACigIHuhXeGxAAARAED3QvvDIkBAIgCBroX3hkSAwAQBQx0L7wzJAYAIAoY6F54Z0gMAEAUMNC98M6QGACAKGCge+GdITEAAFGMa6AAAACnGDBQAACAQsBAAQAACgEDBQAAKAQMFAAAoBAwUAAAgELAQAEAAAoBAwUAACjEEAO9dbju8Njr5qmj9QtUiTsXzrevvvfL6/XZpy7xE9+uiP/WDQ5eI8eT13aFH/81OuHjx3/x73ZVnvyTX/mrr9NhPU5e2pHprb91+ASZci7xVu8K+w0AAMzYr4Eerdv5/FpT7OzL3MRvNcXOkU6Tx2vkePtC8+5pMuHj3ZkX1Gub3MadC1YOJxfXHgPNI67Qd4XzBgAAZgwzUO+EJn3u5Gjdzufj9dndWu72RY8jlBPvLPKJS7vVIu1HWbxGjjuHO7fj/ZrH8o/Xjx92TnX0uL+WvrJdkrc107y+9hpoFrHeFfYbAADYsUcD/d7z63Y+7+yoPr1biZHryWLiyppu+MLyeM0cj1urv04b0vH63PMt9Z0Lf+1CxOfaNO5c6Ny4Whn7DDSH2OgK6w0AAPzgNNDb1c7ep+udvZ0ffe9T5l7kbpX19FvNfL7TOcHR+hlW4s71dsZDGUcOr5Fjz+vB8fqJr3U1n/17bclqC3X9eM14vH7mrcP1uZe7hM+3P5vW79h/1bcHmkWsd4X1BgCAEcBooO0O49lqvh+t/2b9Rpu+1899zvG1NANNJz652C7q6Jsyebxajncia7+dz/2r9lL76LF/2gS3W6g14/H6F7VF5pHl8kfr896bSFnEZh9THQ4AACf4DHR3rfv0jWqbsDp4tK62+XaLI3PhZs1ndRHLRJxloCm8bY4V3VufWq93lkRi53P/+mJ7XX6+cdvj9dkq+K161/RYv0S3k9wVvhEw0HRioyuINwAAMIPnLnw1S40L06Nmz/C6Nb2t+ezZURxAfGTthQ7lbaN2/vZSU5BcMdceeL323t3/jc+1i+vm4v9Yv/lkGWjv0IOJza5w3wAAwAw2AzVtoZ3l9qWvOZ+J2T+UeFeyWlW+9v+3cz+vcVQBAMcnNdprSJUUct+AUHqWCB48yELxXkRQiCI9+Bd4mlJBNOdStHhfUkJooB4CWVMSZTt/lO/n7Psxszt5bxpe8fu5mJ3svI4L+TI/3tvuGT/XH9cco5xNpMftewp/72yuB/34z+UY//z108OJ7pzTR+cfboO4KqCDB/Y/ivgFgJGNdgkvzoicOZbmNl/bCsP/457u9TyZyRj4VL+z+6FMwrj6GOf21LNnXqXsmMrb5fS+jfDVQzP6ioCKrfqcd1VABw8cfBTRCwAjGy2gZnL48ICe9p1/5g0s5+48eD7gHuiQce0xXk5X3lvVHZNDyMtt3Tl5trv34Os/zJW20zEvoGbkVQEdPHD4UYQvAIxsxIC66Vkf0L6r4eyBO1+njdseY7tjz0xS1Tnxb8oLbd05cX57/6xZ3qp0D8d9Cn86cTOeOXD8v05AgbdpzEt454Lc3FIMe9P+Pb952rPaMndg/21Z4zrH2Ha145K53Sz69ruccqQ6Z/Ns5+G7h2fnf8r/Dgno4IHjj4KAAm/TeNOY7ANsc9WpXoSP2du/5+6n5PkDn9oOdp7eXm9c9xiXT/c7H8OrIURlv5JR8zqn7576HYtWIq25hB88sPdRxC8AjGzUeaD3njdmKqVchH0mv9mjex5oPFtopIH1AvZX0yET9NeM6x3j5VR+edLKp/DqAZYc37nSfvNs0tE5vbDeXQu/OqCDB/Y+ivgFgJGNuBJpbiYJyS8ssgt7gi8vmtulnO11a+ffd/LA7TKd7hxdZ9zgGOfOqqXY3DxKn+iJnXq+uz6QZ3L3oGNX4bcxrQno4IG9jyJ6AWBk46+FV4t1nk6+EWd2e+HXZ5q/5/nEi9N4AwtywVDf13ZeZ9zwGJ118zHdOXFyKE98zWwjOR1AHIh9DOS9/0pOy//SSebqgA4fuCGgwA3KCSgA/K8RUABIREABIBEBBYBEBBQAEhFQAEhEQAEgEQEFgEQEFAASEVAASERAASARAQWARAQUABIRUBRpVt06TNitrt5/OfqxAH0IKIrUF9Cjj7oDabYTUNwoAooi9QS0L5B2OwHFjSKgKFJiQIEbRUBRJAKKdwEBRZEIKN4FBBRlefFpVYs9Ot4AAAJoSURBVG3cfdkG9Phgq6qqO5/LPs4qZVduv5DbN3Z+a7ztOqSLb6vbzYt9NZAesdJvDPYDMhFQlESkT7l1oAO6eFwZm4deQGd2+92mM6Af1GagQzPCxo/qH/D2AzIRUJREZE+cNKpsqoDO1OvmQpxN3ta/15fqM31O+fqxKaH/FF5l2IzzXrVz0iyeVPoN4X5AFgKKgvy9pa/PZehkQP/9RHdT/qACaEIp3qe3izeqU8s4oLtmN/PGWo0X7QdkIaAoSG3vfIryyZ/ObeZEEtVvansiaR8xqdudHQE1v6+Xl+7yh2g/IAsBRTmcqtXBU/jaDahbP70lCqh5KN8Oo1Ic7wdkIaAoR3vF7k1jen38y3fblRtQeWW+JH8RBdSM4wc03g/IQkBRDhG4XfOjDejRttc7AoqiEFCUIzoD1bOa7nz2w0kdBDS4gTk4oNz4xJgIKMoR3QM1s5ia+B5ocANzWEDj/YAsBBQFae986ufoy+CZp/I2lO3DdfuWYQGN9wOyEFAUpJ2nqeeBLis38+6ByveZX5xX1RfN4IBG+wFZCChKolcKtSuRzCX88b5diymncy5O1C82HzXuCiO9fU1Ao/2ALAQURTEr1ze/1yuR9s0T850n+ozxXL6QcWzXtOsO2u3rAhruB2QhoCjLsfdtTIuft+V3J/3aPkA/2hKhlO27OJATnD58ZHYz29cGNNwPyEFAASARAQWARAQUABIRUABIREABIBEBBYBEBBQAEhFQAEhEQAEgEQEFgEQEFAASEVAASERAASARAQWARAQUABIRUABIREABIBEBBYBEBBQAEhFQAEj0H4SJYhExeUObAAAAAElFTkSuQmCC" width="672" /></p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUAAAAPACAMAAADDuCPrAAACQFBMVEUAAAAAADoAAGYAOjoAOmYAOpAAZpAAZrYZGT8ZGWIZPz8ZP2IZP4EZYp8aGhozMzM6AAA6ADo6OgA6Ojo6OmY6OpA6ZmY6ZpA6ZrY6kJA6kLY6kNs/GRk/GWI/Pxk/Pz8/P2I/YmI/YoE/Yp8/gYE/gb1NTU1NTW5NTY5Nbm5Nbo5NbqtNjshiGRliPxliPz9iYhliYj9igZ9in71in9lmAABmADpmOgBmOjpmZgBmZjpmZmZmZpBmkGZmkJBmkLZmkNtmtrZmtttmtv9uTU1uTY5ubk1ubo5ujo5ujqtujshuq6tuq+SBPxmBYj+BgZ+Bn72BvZ+BvdmOTU2Obk2Obm6Ojm6Ojo6Oq6uOq8iOyOSOyP+QOgCQOjqQZgCQZjqQZmaQkDqQkGaQkLaQtraQttuQtv+Q27aQ29uQ2/+fYhmfYj+fgT+fgWKfgYGfvYGfvb2fvdmf2Z+f2b2f2dmrbk2rjm6rq46rq8iryOSr5Mir5P+2ZgC2Zjq2Zma2kDq2kGa2kJC2tpC2tra2ttu229u22/+2//+9gT+9n2K9n4G9vYG9vZ+9vdm92b292dnIjk3Ijm7Iq27Iq6vI5KvI5OTI5P/I/8jI///Zn2LZvYHZvZ/Zvb3Z2Z/Z2b3Z2dnbkDrbkGbbtmbbtpDbtrbb27bb29vb2//b/7bb///kq27kyI7kyKvkyMjk5Kvk5Mjk/+Tk///r6+v/tmb/yI7/25D/27b/29v/5Kv/5Mj/5OT//7b//8j//9v//+T///8FHbLWAAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nOy9/dNtR3Xn1zKiJN4uCiKYjJSMY4dHDAg8YyAm4JjE3BoXFDCTEa5KGTJ2ZcZJLNtJnFiucnEdk9jGgniCmB9USBjdGxhMJKiaoiWQKHTv/tdyztm7e732y95nv/R+zlol3eecvbu/vXqt7s/u/XLOcZ2ZmZmZ2SRzWztgZmZmtlczgJqZmZlNNAOomZmZ2UQzgJqZmZlNNAOomZmZ2UQzgJqZmZlNNAOomZmZ2UQzgJqZmZlNNAOomZmZ2UQzgJqZmZlNNAOomZmZ2UQzgJqZmZlNNAOomZmZ2UQzgJqZmZlNNAOomZmZ2URbEqAvO2afXLCx3dkt5x4RG7/z8CFMb/gfNnBnSfve77zj0K2HP/EibLr73Y8eNr3z917Mlurtlrvv91XdMSLI7rg3ot2vfvlQ476f/+vazpiZIbu2AP3uR/VJ10zbGkD//BSmBC72ane/GPJ/XxwAP/nVYdP9X8mU6u3lVETGiCD78UMYoN95aKjx8znmmpnpdk0BephJm2Gosm0FoEPAfu5vFvFrIwOowQj42UfilqGzWikoq8ZzjAirBgBFY/SNRlCz0bYwQLcalIdZshlAK9tWAHrngIrfW8SnDe3QT/fu7x/o9uWHIukO2+47nGXf/YvDvgeSpaC+Gs8xImA/+Qhm5ZGm9x9C/upx7S+vqJiZFcwAulXbCkBvBRJcIzsi6jf6l4dz577Lxxf9AjGcnmululBCB+gYEbD+jD0Oyzvx9Z3rtvI3W8UMoFu1rQP02q2C8CAIB4g7cKAYuqyVOtmBhG94SI3nCJFoP/mdAz3fAcWO5/xwVeGaXXs2W8MMoFu1fSEAvYP6NAwIhK2wSSl1suP15P9RjecIkWjHdal7BO06bAjLTgOo2RTbAqDf++hDxwdHwq3Tw7j/5N0/Pywz3nkawD/5HbK3O17SOj6a8k50dfC7xzLuDZ/4ftjwk9PTK28YHkb58XBnlc+Iu8enhO5794uYVKy5W8dpedr2BvQoDCvEPCbesLZFb06P3jAfiNPDlM4HKRHMo8YDIPdJQoVbA3EmRyHRaLl4sGFAYK8Ubr1MT7E/qaNthEi0Q0zu/0piWB407BTebLStD1C4VfruePXpk7cCc+7+Odvbdf9vIEsQi4+vhIdVoFL/REsCoKHefb8f0SGaO7IgbAvVRSHiMfOGtC17o/gwGAFoPkjpYN4JBY47HiBr2kCIqVHIZDBfHOxOj3e07iMLSVpqiMkDibVhvQiq8x8cL5Hqw/I6Xn82W95WByh6+GTYexjrD4e3+EGUYTzf4eWxQj+zbsGG06zSAQr1fu6/GNAhm7sVnIH2ZCHsMfcGty1rRkqCD8EwQPNBygTz2OLpxZ0YiVDh5d6HqVHIZTBbHOzYDr9WKdkXSnWB+TpAq0WyNYN971ftHpLZFFsdoEfYHc/9jkO2H+N3jtPuH7zYvfr9/vXxQRR4rOTIleODJnfjluPjK7/x4vCwyiNDkWOl7tW/CGW0SXd6yOXFcCM2Nk2bO7H46N9pofZJvRD2WHiD2hY1T6g6bvnur0YfqIePVAQpF8zh9nO4RQ3PpAbITI1CrtFscTIeTpB6GS/2xHXflwFl/UWHJEDrRLSadFj2hy57kN5sgq34IP1pYsHzJXdvDYP8jsNLjjD/whS4hR80Ga6goTLDzYMwl8JLZdIdW+4fcjk9CvhIsrnBmePORKGkxydPY9uyJvhwQmkKoPkg0S6xcieg//6x5bhYfiSUpR6Mi0K20VxxsLjvTo59SAHWzApAa0WkCYD24/SdX0lVMDNL2toABR7GiXsHzrXxrIjLD/agyctEYQDo/Wy5oUw6pP3yMOFlc90tsv55QC+EPJbeQNuy5i1yeS8J0HyQSHlermcH7Ijn8HdEb0ZFIdtorni0eHUhyz4oJeNJrFJEMQnQN3z8o9oJgZlZ0VYGKLlaBYQKA/oW2vvyaURnH4Ua7ouc2nnXv/4+3cMmHW45LFBkcxgAwxRVCt1RnQp3aWLboibvfQKghSCpXQLH+6jHG2DDOfxQdnIUso1mipN6A2Uz7EOl4neIjAYoFlFMHVJ3/8IIajbBVr4GSiaDOAMnn2V2p80vJyfk3/9fv/sQu2X9zn8VmpOTjj/R84jaHJ6KvV9aIUkJ5E1sSdYkPtxJAjQfpHwwu+GKZJS+E68TH52bGoV8o5niwX6C7tKkL1/iUjE+sUXw9FCmSoTUkJEidsduI5mNt6YBetirTsj+O8tgYqB69/+ebCdsgfmho0NlgVaIOsW9SQH0jS8SH15eCqDHlSU0A5c5HjkjCvlGywA93Qr8G1rrZGRBi0vB8wNJgJZFxgAUXSwyM6u1HQIUHryEiXH6jF5vibvwSwFUerM1QF+OURhED4XCmfxGAP2Ow0MBf58c/uoqUuqOY/ZJisMqkTEAvZafAzNb2rYE6B1+Qlz1QPTwGOLD7/r1v/r/MA5e/T8/enocJYCi7hSerzlUgPJCyCnFGwxQWnPKKbwIUlruAeQRgdwjETdTo5BvtATQIwzfDSMBUxzJ0VIKQHnnyyKqGUDN5rOVAZq4P/IAbGFjmH2u74H+fvRvxJM7etkq3grI30QKj1mn7+NAc4mvnUM3Tbg3+CYSrXneTSQBJv0m0vHFv6Tf2PbGFwOtJ0ch22gBoPyr4pSPsctSJYBWiaiGhlT+aXwzs6Kt/SD9HfUJnQfk3mGFhq5MDSMczdb+sUUNS9WPMbHmFBYohXTkv8xO4ZWarPcpbuWDlA1m7wV5RupwDv8/xXPcqVHINpoH6OkYw7eg+D2QKBUs8TUf40SQ0S8TidI/1r/0ycwsZ2sDVH9GXHk4MoznW/ja3oBLKHJSQFM67M0+SP+z8Ai53hxjgVKIXnRg3kDbsibt/cgH6SVAlXID026hk/hD3P6jj6DnQidFIdtoFqAvy9/XACfiz3UopYIlADpOhDqEhwu69bbVd4eZ7dfa+CjnA3jv/X89fDDytDV+lDOcnd8aTppPHzyMn665//eOLcWPNGufhb41XB5DH6OUzSkskIXo4od5g9pW5aH36TPnfJBywbwFH9fClIC2pkah0GiyuHpze3ACvkw+dws8AdBxIsjwsDyuwk+j6/jJVluAmo22Nr5MJM45fEsYHrsm5eH7OI4WVoRgjyAd8eM6ejHUnMICWYitmZk30LasiX717GMZgOaDlAkmXozF3t9xCA5To5DLYOGMH1uvjyRiRGUpaK/uN5FyIsjIsPxzVKF48m9mxm39r7P7WXzuB76pDebc3fg8Uvypxfi7ifCZ+N7u+6/D1c/4jXfxEtjLwIdo8Ymjn/+X8SyUN6exQBTCHiveQNuyNwFW933yTu7eTT5IyWCiC6u3gCDoW0LPiEKy0eI9J4Vq7Ac1E6WG5lJfdTxGBBkdlpA/46fZeNviC5W/e3ze6A34u4LxnPve6euJ8dcn8y9U7r/99/hz4LHqq18+fZ8a+onw7xzr/APa8OmrhI9Ct2B5xprTWcAKEY8Vb1DbsjffO/2W+VcyjzFVBAmMlLtFb/DoT4dNjkKi0dJTTyrV+p90fxgeYJgA0DEiyNiwfHUYXXb902yCLQnQZu3CnlgRT3v1dmFRMDNbwC4HoGiZlF7TXEvDHxu/3CiYmS1glwPQO+R7Ki7oiRX8QcfLjYKZ2RJ2OQA9PbFy/NG57x1vmVzOh/aOX+UPoLzUKJiZLWKXA9D+a94Gu5Sl1/CUFbrUeYlRMDNbyi4IoPCwTunrJq6P9XemyQfRLzAKZmZL2QUBNP56/K9fzq/fHM/f38AecLy8KJiZLWUXBVAzMzOzOc0AamZmZjbRDKBmZmZmE80AamZmZjbRDKBmZmZmE80AamZmZjbRDKBmZmZmE80AamZmZjbRDKBmZmZmE80AamZmZjbRDKBmZmZmE80AamZmZjbRDKBmZmZmE80AamZmZjbRlgPobbPWzDLUvFmGWjcD6OWaZah5swy1bgbQyzXLUPNmGWrdDKCXa5ah5s0y1LoZQC/XLEPNm2WodTOAXq5Zhpo3y1DrZgC9XLMMNW+WodbNAHq5Zhlq3ixDrZsB9HLNMtS8WYZaNwPo5ZplqHmzDLVuBtDLNctQ82YZat0MoJdrlqHmzTLUuhlAL9csQ82bZah1M4BerlmGmjfLUOtmAL1csww1b5ah1s0AerlmGWreLEOtmwFU2POP3jjZg7/wx2HTC5+98Z7h5bc/cGOwN//S18P+v/3coc6Dv/jHQqtp222GbrOIqzlBOXvuzf/pPwvbX/if/8l//CcrOzvddpyh28e8vAlC/fyjxzfXaPr0ZgAVFgB6sA/DprcO6YYRcOPGMDwOU3Ww9+iKjdpuM8QjruSE5Ow5lMrnUJH2bbcZOlkWoMr0+cWvp5TaNQOosOcf7Sfe3/1BnGpPvukfP/gv+pcwKL726I239VtuvPlDXz+V3xdBd5shHnGZk9skZ8/dePOjcfObHzWArmQqQMX0+eCNB3/l3xyS+UdwxNuRGUCFBYAeD439uuXbH3jrV8PERIOiHxK3n4x5f3pPi5sdA5RHXOaE5uy5G2/5YNz8n31gR0naa4Z6ywJUTp9vfTAe/fZjBlBhEaCH3PYryuduvCcmHo2A/uXzsKJBl932YHvNkIi4yMltmrPnbrz1D4dj4XMP/jcG0LUsD1AxfQ6vwznDfswAKkyuQJ885PXJuBqNCX/utPx5EkHz73Z1CrLXDImIi5zcpjk7APT/Hs7hn3zT/2YAXcvyAO1T9TReczy5qwXIyQygwgJAX/iD4eTitOG54U0cAS989XQRJ1J2f7bTDMmI85zcZjk7/P1/Pnsq8u0PvO3bBtC1LAdQdfo8t7+roAZQYXAX/i39gxVP96eJ/ekFvo14zHbYvkPbaYZkxHlObrOcHefl06eJevjXALqaFe7Cy+nz/J5u8PVmABUGAH3wQ8f3L3x2uNjNHpk53Qg2gK5uOYD2OeE5OwL0uX6986Y/MYCuZvnnQD/0dV7EAHpNADqcwh9OMj58en86KxyurvUZf+EPbwyz+IXPGkDXNRlxnhOesyNAT2WOmw2gq1nyFB5SZSvQ6wvQcEnmafJcfRgUTw/PZts10LUtfQ306fi8PM3ZKY/HO0rH83gD6GqWuQaqTx+7Bnq9AHrKNrpq87bbaFA8eSMMBXh47bkbv7SjAbDXDImIi5ywnJ3m5eEc/nRibwBdzXI3kWD62F346w3Q58J07Z9SQw+E9jvwaceTu3oSeK8ZEhEXOWE5OwH0UOh/efRt/Kpb47bTDA2WA6g2few50GsG0HjqdzL+0HY4C4GPUnz1xq4GwG4zxCMucsJydsrjC5998J8cNxtAV7Psc6AwfYaHXeyTSNcNoF999DD70CB4eljIDO8Pk/Ot/Y3E/o7itz5nn4Vfx3jEeU54zuK1bPYod/u21wz1lgVomD6Hv/Gz8G/ZT2aCGUCFoW9jOmQYXXB7/lF6D+L5R3tgHo6c9m1MqxqLOM8Jz1kP0OHrmQygqxm6FP1h7bPwffZe+Jx9G9P1BOgv/POvk7uEh9f0KZhwIfz21355j19ouNsM3WYRZzn533nOeoAO31RgAF3N8gCF6WPfB3qtAHoxZhlq3ixDrZsB9HLNMtS8WYZaNwPo5ZplqHmzDLVuBtDLNctQ82YZat0MoJdrlqHmzTLUuhlAL9csQ82bZah1M4BerlmGmjfLUOtmAL1csww1b5ah1s0AerlmGWreLEOtmwH0cs0y1LxZhlo3A+jlmmWoebMMtW4G0Ms1y1DzZhlq3Qygl2uWoebNMtS6rQZQX2N1pfqiI8qO0V1MeJTuKpFYOENtRHJ3DmdStK1jux7riwkbQNcSbm9QGUBXEjaAbiK8J4C+/sTjw6t737h5dfWPftsAepauAXQD3TYcNoDOJbwngD5zNQD0p09cnezTBtBzdA2gG+i24bABdC7h/QD03jNXA0DvPXX1vme7e//26rEvGUDP0DWAbqDbhsMG0LmEdwPQH37+KgD0lav3fvP496WwIjWATtI1gG6g24bDBtC5hPcC0JcOJ+w/6IF5WIB+IVFq7i63F8o5dQ2gG+i24bABdC7h3QD0fX92WHmeAPr6E/0C1AB6pq4BdAPdNhw2gM4lvBeAHm0A6Gs33/+jH/zTq6sDUoO9fbCJwmZmZmZ7sfMB+qf9XfjPhD0GUDMzswuxMwH6yvEBph91975hd+HP07VT+A1023DYTuHnEt7hKfwrYen5jN2FP0vXALqBbhsOG0DnEt4hQF+7Oaw8jxdDDaDTdQ2gG+i24bABdC7hXQJ0uAsfXxhAJ+kaQDfQbcNhA+hcwjsE6L2nhhXoK1e2Aj1H1wC6gW4bDhtA5xLeIUDjtc9n4Da8AXSCrgF0A902HDaAziW8R4C+dvPqU8/aXfizdQ2gG+i24bABdC7hPQK0e+Xm6THQx8QnOufucnuhnFPXALqBbhsOG0DnEt4lQLuf/ukBob/5rCgxd5fbC+WcugbQDXTbcNgAOpfwngBatrm73F4o59Q1gG6g24bDBtC5hA2gi/R4K+H2BpUBdCVhA+gmwgbQRXq8lXB7g8oAupKwAXQTYQPoIj3eSri9QWUAXUnYALqJsAF0kR5vJdzeoDKAriRsAN1E2AC6SI+3Em5vUBlAVxI2gG4ibABdpMdbCbc3qAygKwkbQDcRNoAu0uOthNsbVAbQlYQNoJsIG0AX6fFWwu0NKgPoSsIG0E2EDaCL9Hgr4fYGlQF0JWED6CbCBtBFeryVcHuDygC6krABdBNhA+giPd5KuL1BZQBdSdgAuomwAXSRHm8l3N6gMoCuJGwA3UTYALpIj7cSbm9QGUBXEjaAbiJsAF2kx1sJtzeoDKArCRtANxE2gC7S462E2xtUBtCVhA2gmwhfL4CamZmZXXOzFegFHZUXzlAbkdydw7YCnUv4eq1A5+5ye6GcU9cAuoFuGw4bQOcSNoAu0uOthNsbVAbQlYQNoJsIG0AX6fFWwu0NKgPoSsIG0E2EDaCL9Hgr4fYGlQF0JWED6CbCBtBFeryVcHuDygC6krABdBNhA+giPd5KuL1BZQBdSdgAuomwAXSRHm8l3N6gMoCuJGwA3UTYALpIj7cSbm9QGUBXEjaAbiJsAF2kx1sJtzeoDKArCRtANxE2gC7S462E2xtUBtCVhA2gmwgbQBfp8VbC7Q0qA+hKwgbQTYQNoIv0eCvh9gaVAXQlYQPoJsIG0EV6vJVwe4PKALqSsAF0E2ED6CI93kq4vUFlAF1J2AC6ibABdJEebyXc3qAygK4kbADdRNgAukiPtxJub1AZQFcSNoBuImwAXaTHWwm3N6gMoCsJG0A3Ed4TQF9/4vHh1Q9/6+rqsU89awA9S9cAuoFuGw4bQOcS3hNAn7kaAPqNq5M99iUD6Dm6BtANdNtw2AA6l/B+AHrvmasBoK9cPfbbXffTp67e+00D6Bm6BtANdNtw2AA6l/BuAPrDz18NAL331NUXjn9ff6L/awAdq+vcQsKhMKloAF1F2AC6ifBeAPrS1dWnf9AD9PUnhpXnM1ef2QyggUHTdDcHqFtGOBQmFQ2gqwgbQDcR3g1A3/dnh1P3x8m2bQEqCLqfWWQA3U63DYe3Aqiy7phFt6L0QsJ7AejRGEBffyLeRXr7YBOFJ9iBQes1Nrft2nmzHZuNvDlsJoC+BG9XB6jb9UjYtfNmOzYbeXPYPAB9ZcvHmJxyMrKb8zgXvLdT+PV123B4o1N4p1z5mkO3pvRCwrs9hX/l5mP8Hvx6AHUG0GxhUtEAuoqwAXQT4b0C9CVl/bkiQLXL4buZRQbQDXXbcNgAOpfwTgH6DZWfawH0NArEUNjNLDKAbqjbhsObAbR0H94AqgnPDdB7z1y9j38IaVWAnv4xgCYLk4oG0FWEdwBQtw+AFp+1mqjbDkCfuXr/j9QSc3dZV3T7Biisnw2g6+u24fBWAC3SqQ2AjiDoHgH6UoqfawG0/9cAmixMKhpAVxE2gM4lfN0B+voTV8EeZyXm7rKq6AygpcKkogF0FeFmARp55PYBUFe+1TVJtxmAvnJVD1AtEmcDNCG9l1lkAN1Stw2HNwIo/DuD7nIA7UZcBt0TQMsm3cCRcLPcOomKPMgrziLSNH5TDdDTvwbQ9XXbcHgzgJbuIjUCUG8AHYwBdIZ1VxTcDqD0HAO/qdA93Ql1YwE6+bqQAXQl4VYBCmfE/chbBqBJ2dFfnON6gNYO9wsCqBuyd96gdJMBSleNZ1ynPvFP16oCqJsQCQPoTLptOLwqQLtwzuOGg/csussB9CRsAO1NANSdC1BNWvRYseSqseyFIkT7NUY3DOPrCNCtvizNAJq2uOgcDvt7AWjleL88gLqzsOGmApSsGkfd52PCYTiqTpZ142geDdBpdybXBOhmHxScZxYp3u8foPF0x8c/s+iKzOu6bixA3QDQ2iXo9QeoQ6/i2qvSZGGyikz3WBShq8bpT0rABSWkTISzUviC1Ji1OHN4xLMoKwJ0u8+5zDKLtNzN4nBJeB2A4kuhM+hygCZk48CtB+ggXDlB5weok8ItAdRDOssRcrxY+o0WSlSXrhrjdaEqY0da1jgHaE4Xd2fUWpw6XArdVgD1S50gFguPKXsBAGXnfZ4BNJOjcwCqybqxH1uOAK1cgo65cFcJULlkbgGgMZG+CxcBddrQM2KGJEdLkoo5gNLTbjcVoMQ37CPsz+k6VnYkQHEriWLc4TUByi9tnCe8OkDV3M3hsJqupQGKx0o3DDw8E6fp0qIUoPqx8xyAVs3QSwRoPK3QGIq3xMUq6xt/l0gRPl8mFY6XWUacwyNEKKfRtQCNZ1LoPelFzjBAU0ceX5P7irYmAxS7oPerNYCyA+JyAM0KLwJQNFg6fuqTOcpN6zAd2dSRIciVS2YHAK2bGbMD1JUn0coARScOp39CPp3zkgbkLZQJG5g2KSYBGldFtL47XaceC1BxkpICaIptoTNiQ9WljC4UJKsJUQ45PDi/FkD5tY3SuqtWt6rwmLLqFZnEGko7q6nQZTVmBKg2vXMtJgCaHHLZ62CsKLn6rReEIV+5ZD4BIg6pbJ3Bi7SW57GvBKgU3hCgaNqHWHaeUoAhk51/4NSwDMWg6ymKU4KvYPuDXA1A0WCV0wDBGS1tWWc8f0MPD46VSvnREx+OOHqlioNnsSlev1hWLBfwEbMoXDM9K5wYU5YBNA4izRlxMpk+xUg91eNUYE0EqNNSrJaCadd1zO0cQeX9m2qAaqIjAAoa5Jhcmh2XAFCH/wBACSlx3wVAI4VpPxGAgy4PRP8P2jjsiTwqxNLFUCozRwDU0Y/x8kzinvpA2/SalTgSHI781AHa/z0boJVu9fpD28iN3pfCuisW0puZANA6j9mZJzmu6QDlNITd2HsOUDykU2QONSszhNIyEqBsLKa5xDus53FwG5UJuqrDEaApqVjMEYD6ivWFOqQS7/hV24QvUnhLgMK8D97BGQUiKBTFi7WYAIfGOtqHiwmABilard/WH5VJ42oo42DVxhFCdPCEgJlOPEcPDqfSPsQh4QHUDssIFA7VYR8cDjYOoI5aoXSvT5qOr3nkhWNDa6kZMh6glR7LM8/Ty+AQ2RdTDw6zFMI+AVCHq8wBUDxYKjgb1i0d64TnA1H4xQoz9lJ30Fb03qHKfbkiQGGOkPuSjjapO8x7jvOFBNLPLCurnlYB6gaA0nMmJ9+J2cwiGTIbkUJbRxo4MsMIxABNTrswWuM1B6UAmYSRc1wYj2jkYYe8yhkDaJIVkwAqjkrY7bxfvb4sGTOuY4OlRo8/41HBiTyMU8Iw6tjIi87RY2dwGAvEnXx2OlBXOjABoESqCNDgQ1gscICK3JAjRvoxZ7YmIL2rAaiaIDqq6TkCP16xQdqpe2FTFUBRHTggIv+2BigaZieADptIqClvUEC8I8mCAhFJ6twZaEWDGUOFQKeRETeCpqcogUudyuDrTWTiQYc9+RftSpuDJ/nEcYEUmwRQOiVI/dSRRYxklypAt+NlCB6zSjuJez3Sk14XBoNeUBMGR+LVGDLzvY8H+3hI8Pj7jOLQZtMexjYaC8wL4lENQFHqvVcWdDyPsXk49pKSfL6ALj2isAeg0MsubOCJZBVcAKgyIqAYTOkUQNmwG45bZB+rAs33ZZPCBFAeCw8VNwaow/51qLdhaIpIDfU6MqihQIwOpJumBrOVVEej3YUjcSKroSlY38gikW0UoBHfEADkJPG836cHDl6E6UCQrHs89hSeDXaoT9cexDE2kJXI0KGLyB534eOh7P+oz7mQZ7y0YqownubQrbjHhdRDjz3CLTTf/2GzkwuGtoIXxKMKgIIQDz5pEzUb/nZdjDnpN5swmHOsEKqIxx/rYyyIe00jmcgjGkfRcdEtPuiH1x3bhR2KgYiBRrVxxEAPWtgEoJqFTId3bIvr76V0scRQaihyKg86IDJUDf/A1qEINA1uoPZoLS0iuK1QAfVoKBO972hTbugE6m3oTl/N0VjQnhGPwWXRBI+00o2yQQ9pFE/NotfYL54rRdThf1ENxzegcikHuQD2kA0eGRc1VmEH1MEBjiOFdCH2FifBESXaIgqNluARhhtiJjrpwkBD4zSMwNAz4UucD3G7iAEqEwLG+47iCMFyuKSWKdIb2jHRRZR87D9RpWlRh2f0lITDdWpZWbmizDRTji7sIOXCqjJuigGTVfqyYqVIFpVw3HDk8KQ0jDe6sEByRBEfWsOW45IZlqDE2ygTdgd/YwvINeRtfIOGDj6sgjg6Wmq9YXEuHzzVBJEVtotHdY8XLWRNgN52iifRQUeMLOiU4mRrskH+SlYMncLVcUDEDuYlWmZ1uESQxdknIwH77jzJEspl7wXqfEWGSPU+kmRECFccxLknBQ48X0bC0jEsFHFT8BoPXhYGHFIR11MkRY61WsyYi7R2XNmisMJkiVFTkoCHJ5NynOgAACAASURBVMUJaqCZU3hI7vAPHGRo/Fid0/Z+AMdUskFMB0AHjXiSP5EQeOdpkghf45YOlY65UUYM0qfJI41i57QRR0OAx4T2iCwdOuXcJxOEJ0u4L4Q8INnCG/TPdLGwhy1dgp8QDuaTzAjxhL1AcRC1UUCojzhvAT7MCbw/tkCphTsVSuIcOTSlT14gh4sZQo2Efzs8suJ0wc1H77rozekPkoFCcMTAYxtFEXMV+pKEN3IO2mCp4JXYPCFvPOwPtUMg2AiActE/MltxZnHfcb4LGdoaoDQwKJOkBp1xaATgCYJyMByU8RRwNcZmKK0Zh2/KZRdyEB0WnWWl9Y14m9eaiMV4rummYu5TCfLeQ2j7QTlsoiOLvDhFvVP4yUe/7IzqAxnqHQ4TjlocADh3VEoNXgwI9ZGRhFTA+2kQwr8o6A45f4odGgUwsYMXyRSpCcLCMDqp4wRssDfugX6RSLL+Qms+RjomwZNXHZy+od04ZRioPBMkyPgiP/YTvQ6e4JA4ONij5HsiwQYv6Qa7Fk9I3AhAcfRjNIF0aDyQmxmDhQ8MOWURoACURi62SlVpmuTcHsaO10poPlKDu/AMi6BORjpyimRYY47YiyOAKTfyLrzwd7iTEJegLu5DzQ3u1KxANdOLezQk8JxCowe7SqNXaDwGJB9fUoFmxUH06ZA66eJSggielJ38HChOmSMxiPLKViAmIBL1j8MMv2HHCdSHsLoBCqMZjl+kphhpkx6mNAsNDSEIbwVA6XCK/8TE4JTqQ6eUoa0AyrrkUL94YGF2etpfrVSITXxeWIZdDii8nzmFEiIyGMS8U2ShNlMj9FHBCm7QDooyFJesfEXutQzxHoDTIn00PJwKaU0aIXyuzlOOOi2ns0NRx5sIxJX2xBYWQDFoMDeoDhvWzCnSGi52FkCRRxJPNFLawIFJpOE16KPaSAr/42kEwm+/OXqw8LwBMnZ4uGCByKPHzMcpguJPp2FyNMf6HagMfpI5RWZRiwClICR9htSgcDp8VNdiSiIaj0W8DJ8JKLY4NxA/Mr3TTYtZONxEIqNDHg8DmZTjPbzz+C/xl0Q1BgA7dSZAKU/4jISh7snGQsAUXS5Au4nuNWLi6Q536UYTruQrVOxGw3Z41TGSsDPnuKGQIpmhmGLW+XSs6R64GNI7rh5Rhhcd34HLYL644ZE9Twp6MuY9U4Ekkt1qcwkXw7wLR+FcFGjPAkCjU+h/6JTzzX2hMnJYAhTFlka4akZACBFARQQ5QD0RgNYkEIbq2sMjCKA4C1gmbvNaVbaVuO6RR4lRRniGYljKvZoh3ojoMLSIY6SEheZW7O1QU6RzHA39yQctmxgS3sULJ3NaAaHDH3LE9rKW4nVpesoMIXJo2nD0TDeLQ53tW/pQxGaHGz4iSocFASS0lx8zpKzT5xs5avk4IiXCuc/RxwhQMlu0ZWspQ6t/nR2LD3nDDk7sUFU2RAAAqCB0QGEMHNxZh+Y8kAmcP4Y4roM9Shv1mQ4faN9LgOo9o7Hih+xhUGnDkzY2AaDeqWNvTBIqeiRV2X58VDi+7Ng+LXCo6xNd1SZdepcoGkdfqrB6/MunSM1Qqm3UBAIjqoOGKnQMZSBzVJJcwT0IAI3yUJGvBpBUpr1ivAfgDdjD7WUFcJOpy9+iSn4SbQdQbTip+xKdVA8y4d9ODQ2frxqnCDtjBGNNBFCQQByNm+JghQGjdkPtmk4b5a04PLh4OC0fPJXpmZj+2lBLkSxVXU+u8F1HKm5yhJ1F/VESoYe91/zkN/4rkphPkZagkX7zA1OiVFpczxfughsAioDJ94vXqBDTL/WQzifv5EDMKIADXZcLJz1AtAJQOtspJIX/uUGnBilSjAOUvIxREc3K8jAkMJtiVD3RxsOkf9sRMbWf1JtCMV4LNpOR6M8DaN4J3QolK6a+xyXja6FT7RHIZQvoJ4hTLHjuySKrqtIkgOYgkWqs7ItaLE2ZuDt8HNppHia4nPVGLSVXPWrR3IqFDAg8PIbUsboxK+lJtNUK1FMMpgiisNLjMZrMDW6OsY3PTfGhuLBbgXTYAfMllITBF8Q7XUMRTXYmER/y5LQofQZAZcMVVlwyFPFJS0/ZxVwRDB7NXkW04M+EFs4AaKJhGJITluuerULAy3w9B19SUnQwtXUET8cfO5zuWNWobA2gMKInDmk8iBITE5GtLk/Ay8LgK+QODsnHP+nlDT8kZBuQm+jzCOqSJ4zmSc+Bam2fA6Ax/DzT9APqFLad60lVI9MAShZRmuYUP05anpz6jRDoOjL2yT61QqVufuuwaKk55Kpgr4hUKUMbr0Bznme6hHunlhg/9ROl0qgrCk6ZgrWV0CLBawBF1x7OfIxphD+N2qRuTe9QP58rn6U6G6DKoXNCHmMVUrWefIkGM6uRahfR6WH9lGZX3HS3yjpVk2gDgNaTM1fSe6/NDX5lQFuejTDt+BaPtRjlaXeL2UZlpkx2/dg6qJ0D0NWWjZOsNlTT+KmOrfltGkDLksUiep1iXZWFI0rHsV4dW/VLp0rtoXOzer8SZRsEaN5tdqaf65l+/HUocj6sCBIaCVmtiFjkVSQotb9mdZ32MFVZEZsO0KbhuaWNXt3l9i0A0CqfxKEyDdARw61cST9TyommAarFQpu7XnlTcIu20i5AEx6n3tTV5ge4HM3IxdIoQD3ItVX0ZkxFfjzIVO5EL/WSZwDUbDYrLW/WASgdW3CnKJ6rwGbmIxaY5fAx6jiduZNQcdMTJlW/+B1/4XB/AGXuV1UivS3GJNtu2c9A3bKwDsREC5VH5yp2xobOeYxpLRu9LNmNFUfSigCl/ugxzwzMmmM70UqUTJIuec6ZOV3LuqFXyJw4pirtDKCOZCwFkSRd6J7sOXY42Zcf+dWqkeuddYvUcCch4Da+hQ5mz+YJpbGWKJuWuNgV6LmdGb1UmdTImgD17PLWSI7Qt9Ul+d5iQ5UOTTDvy0tQpc7SAP3pb11dXX3q2VEAzce4HOTk1UfWzDk3YPkxFw88frqta4RPZQ/jNt4bdHjrWO9GLQWuPUAzp8crepGznB8hLecCtPLczuM/Y23EuBujNJOx27mJMuptk4Lu4gB97ebV0R770giAFnI48tyYd5j1foTsCKs6zlYcCQpL7VL9vHiLAFVb0TbN5c0kmXPaHuH4TABdyr2S0uIVzhRnq+YUQXOL68UBeu+pq/c/2/308O+PZgPoWTb6wsgkFZ/D3sQ2k62kZdoEaGHRNbfkjm02gK4Zn8r1rrKJuj/e5/S6KV1FrKdEWb6BPQe0MEBfu/nebx7+vP6EWIJOm56lM4UzTmFYnXBCQ8NVKVh7OeJMS5yYjHlMu7EVaMWplmLoMnXtmDjHVsPRNICe7V61wMjz3XTVsN7YFPT6EC+4tDRAX7l6/PjnsBD9wsjpWbHIS3Q3E4QxCfJDK7LeqGsl08FTWU0W67jXiWX0dIDWrzJIyQ4Fjs4WcZivaiDV6Dw2YQlEk50796vXm7wCzay78q1Wu1dbcCg+GyDrzu+yZzrqRmWqls7ylgbomBXo2HykN05Yyyf2Js/gxwC02gGl7QXPaM8A6EQnOqdkaNkrX6ve+apHGK2WKnweQOe1qtPgbPnyeK5dP6MynbIt70ZOt7Tc1KosC9B4DfTxsOXtg8mylb3s2F+lBNtVVO74v5o38323WaUNnqT3leoWiow3IaxEqQPXE63WuzjNusTraQpj9qnj5ozWpqVouiXrJ2W73smzWq1rqVB+rnmST6+yqZSPCTkkdu8bp7vwn473kM4GqN4PLfsjk0Emnt7GOL3csKsYeJOn8VL87Gp8glLacQz1WeJ4PqvRHeKfQgZ1dI4GK4rxiE1J0RlBDUNylAIex9NRutBI0I7wszXVVWTo/MeYPn8C6PvEg6ATL9+kd6Z+7KbqfDtTInOSUDgRzTfbpRyul9CrnH6xLKkNF0ZnO4Wnn1Px8U4Gu2sQv1YXVZz1lBNdoz1buO58GPUZ/Vqd104G8YbwIzHy8XN+sX3CKfwZfQ9fOzfm6mII1PQLTpNseh+nfhZRL730KfxrN4+Lz8MydPxdeDwdanqm/0xHRXwKBbrkNx+fe1Xcs78r27kARU8nx08PRHbi+RTKDYeMzKHyTO5Rh9QSvuawFTSKixWPCNrRI0hZnnR3gBD7eNl4gLI0nT5K5/X7I4rVrc5YC2clTatb48S0NqdjN7VtaYA+c/WZ4e/jbE9xek7s9ujbNOqOKpXKe0kYI2ezsmoaVFUuzc7kLYr0Qj8GZCgLK9PTsaZf30CmPa4cPYqLKHVcaEMl7MmlLe6JPy6RLAp1uvDd1EIFnIHCAFBcOElyXYksIacBlHe7Y6zmjY+eeNrTL2kRpWzdLNhoXZE1MXQXBui9p4aV52s3+ZP0BYCmVykJW+AiSv48THuf35zdk95dM9VJmcUAqrSFPDiVQOiLzcRKXdiHd1F/BhEhQ8vJ2mJJR0AQBKFkldHv9ueNgazKI9wkXqxrTpOekgBlUyQzpAVMMRIbpWfJ0okNrvoGulPimVzepXdXtjS5ZnULpUm0GUBHW+qSYuUykdYIwWEbuZfpE8VxLcq2S9umtUeXfKXcaxmS0QzEC9Gh+YyICZc7cKrpeT5pxnsG24oY8JNisssDl+M+POnTTfHt0WnsLdFFbgxNeIxE4lZgKMQXXAlpSaZIZiiK1Bq9ZiD6WUfPEbuVIiVkp1dWIxuarwzNYZun8GMttewacyjjKzSxK+3m9CwXnSofryfFrph7JUPDEhO110UKIEohoqCl2unuFtrLVnG0HQZQhT9ad6g+OuyhTuLB33uB20/EltAYx48tQWlh2Ik65l1/LQO2gIdCt/cYeV8EaGw/ynWZqNEu1RnpLEplUkw7qJ1n43XUWSMcy+hKGASRhT+JNPkm0phYiH3quVy2oi8WcT43gUlz5x4NkJpXu6K0OUl67PeBet69Lm4NSUQoCP8PW5CkI7sQQqIIvV6Km0AKHhWgrZMZjS3eayRjThmIfoC4o37QxlFj7AO03inr8hC6jv5wq+wUDsrUj3IO74b66UGJOnc6jaP8h+4kaqd2lAr71I4q7Zpp6OXLvMb4M7nFAdq9dNXbZ/gONfejfK/ZPZIshSN1okBy3TLWCodJRbWmmeyabfQXKgMTThphdqKFE4AAtXN8FySZC3oz8EANRhEZLEgtbqY+KG2wbumFho0dPQAQ0LHCiMyE4uBP8O+4tYMdtHEtJhM+iYQSgOqXR0qHPmxLa9QtHHIXV8fbbKuQmZtAK7JShmb4PtB/f/w+0N8c932gas/yh0OfK1PPZi83kbe1AZ+WGG3MTR+HpWNNKffK9ESnu4NGYCIuwlaHkF9+Mqm1EEQ6On3p2pZUpm1ASb0N0a2EIzVeEgFVOHqCy4JoVQOjT+HBb5wiXx69J4CqC9BxIxqOJHJX5h3fOH4K573qkhczE+r8yoRYnhUztME30o+IFAmwEh1ccFQCJkKLH4P5rrSuh5M9vWZiS2nBnN1dyr06O2E11WvIUkicL9XgO/jFilKIdGjE4vFBvI9ekdfqiXbspNYp3QXZUs7USIgmhkGAWhglXJEhnvxYvzyu4cHXM5ePIXXa4A3L7rD61supW5PTZ/jD5jk9FHAalpXRccDrfhYztCpAU4eB5FtyuA3P7OnxqBoQaEiXsxcbEjObvSXXpVIN80lV4WZxyV6yUu61DHEWKNgg0MSvPW63ZMPzmgLZWnXiquMe8sJVzUN71aVzwhpAq4MxDaAwHuKFE3UShEonr9CvrBcO+UMpsjjxpDRusCPbfTwSx6FPVDt2Mqjrky5EX73TCuNjcUZI6EbBdMv5DG3+u/Bw3qF91SnuFvkQBd6THwmQHAZQ7XKq8BOTVvW/4qgfGiTjP1882YnEdlWomHstQ4iI/YsSjzAhOqhcNJLDQlkK0ELxEQAtalULk2MADJrxwrUAJTNj2OP14aVt9uBgZgipw4wwVKmN5xlqga0cOATiIlJTJGtLx1w/1QH1IRuoEb2HHdkTgQBDEp1JNAZQFhwtiUA66FIaoCJOZGZqowW9QrUY4wJAZUm6iSNPXwbUAlSuecWGfFPxcFzMvZKh4OfgtB/Ho+RnDzVDx7FxuoXiizmcB2g4+Hr0eakJwnUABc7gJUF+/aYMHK/tkmMLrf/YNCOLQDrpXMCh0GGlgxKcj8h2iFds7Yza7cLgcOhhEuQkexHGO9CbTvi2AYoRqSY4zxomRoNJA66IJQeO58liDdDGE6dMCS95CKoGrxMgT5SikrAmGn0Xnvi7JI8g2PPqjik7m3A8PsZjfsWBQRGuA6iafjFGtDGDv9u/1+PVMJLRltA4HSH62INpiCdk2M5WMzBUnYPVlFwgRV8ke8N6oSPHf6TNggCOoBVazGLw0UO/WwRobx2kEEXMae9jHuLL1IGVXA7pY8KRSg6qaI/PjQkBYg/xxyiAztGyHumxLmJBvkM9xsiqzOHQ5PiPcoK3vH7JRgIU0jCr7piyswO0/6eLU3ms8AiAqqavCeU7F8cqH/E+TpuOF+aMRPhBnCIe4PEcFTrsDwxVVhn7DQJyjsIg6kIGCB9F0EIJcvJLikH3dgFQEusQLdwd2n0R2eSgiqFlDRAUQ1saqFwYVFoH4jaSh4QrqkBKkO+mVfGzKOSggf7x5dwnMkQ3LcgjNCNm1R1RdkaADofT079d50tXGhLCRYBqw0unABk7ekVeJXbhVAXdtSUtC4gNH6HQtMn4jCqSsVrXAL4eF44Fo2R40eH9gHjPls5DoMPhzon4hDdxbLYNUE+chpQpxUnw88OGpznhgOOxlQVgjis+cDanBmoqAFnjR4c6BRKX8Y8xMVuSR/FIP7Nufdn5hPvUh9edEskq4RqAEhZlBxk9oKbGC58kIEPAhbV44xSgeHrIhSZbD3kGeBTPyFAy34hzOPrDZ1qjYCgbmiBh6tABXASE+J3N0OoAjWEaAq+NAxRXko7TpWGRAFqY7PB0bDA1kpmkQX5O7+JzdKx9TXG40RcTLfzOtFrSzh1hyFBsGqBOa/F83fqy8wIU5nNX0y1NuCJDkFuyRQwyPH+UNRgbQYhvUTbDOiY4fNs55R0mN9T1tFntPYpnlPC8hnLsHWgSW3ToqKYBlO7AnxBBvMhnaG2AehJc9EFBHHjUf2ki66my8fhDy3jl9JdVw3uC6yG2nfAijkR8XDy97MggYL2kfYVXLNnCNYpTrQMk9aNP4fmmRXnktBZn0K0uOydAUVeqeqUKVwBUqIdh1r+R6w4X4c7GtEBulIudYPvicsWzKRcPh7QW5VB40TFZNHdIBNESgrGBeUUCOczI2BWgN1bo4NO2qN/RI+Jv6wCl+YFOOmH8MTHIjl5PboaicTRpigKgMe5ho6hEBhtulJcVBXF6RRRoB0hl5i6aHsjzsc+BclsWoE5pcQbd6rIzCuOudGP4OeUxJrYJmsdDAnMm7EWP6iIdNtjxNtaeaGawDh/2FYAiTU8e5wdRcmiI/na4OT41mP94B2GnUqTraFNeLEBRiJoBqOxtCBwZHiIeZI2Hl9wCll7fFt/ihMpmlIMoG2EBoA7RHA0BVlleb6e9xMMCx0H0NZZngFfHjsdkahqghDpz6taWXQqgY3THA1RtGZZOaCRoYwfqUVWEI+/loKXNS5aRwQqtx2GOGkIjH7UIxEM+hIurMGnI/KaiZDs5qvB9tHb4A46zEDUFUNFXeuBR+RliixLDT0BABycoxgm2kTBKdxyuTsGIxIfhghxCvkCWxdGPDNfYAGpZGxA049hB9TBAFxQjnwMVtjCPrhNAJ+qO/zo7Xp9DUYw18k53Hu+Q44/s6v96mJKqeS9XGNQ5CtCoiHoZARqbZpOAhoTEi888EQhSMOIjuoKtFYDy7FAUklDynscjBPSehTLupxjBrUfFWLOPCHVLHEujHG0tDhB0EBsqe+gZu5aPfcZuJ39zFPWSDR3sSrpm4wDdVLcNh0dfAxX1OQzwwE8MC6FKtvdvO6oEaqElOVlJK2jJIwnq0DrPI9W4HOz/MIBSEc+UabzQwgNP6FA2Fo7OgtM8PI0ANIQG9SX8ICbbTSiLN6EuiwUZrBpD2thoYckPbzWAch9iLfgehMFZktfoMHqJJZkvePClAMoGSUR5CIvnA8RBJAq5T2SI2u54tDuH5wBo5MpQBg02fUBJWbrD+XiVmrceV2wehl8Y5NAcwh513DnypV2seQ2gLgtQpMMASvVZ98mXfwM/xSFDCG8OUNQbuB+n9DQQ0MX+0QMtX84NL7E6zxEaZyjHHKAEQuBeeIcAiorgNvj61Xvey8heAVAWApFMWP1iWdIErWcA3UB4SYBq9RVIQQX2RvcBjdUolJwXUIPvV1cBWPP0XpLZ0R6gtx1bKuGZx3vE4sUBTeYgB6jXBDXh1QCqG/5SkOF9eBkK9PtO2+KLoR5RIeVdEI6K/Xumi94Mf3nD2DWyYZDGTnWoOakhjMYBfI5uxA3gLquHQgAyHalBHDS7CIsDKL6X+8oS+lgVO8RoJbXSo945PtdxI8RbRzqSml2l3mFeRO5kuo49qLaVV6B4MR7XUaxE2AOnp/3bzmmFnIPjHv3DT99xY/iA13WohCOHIkf8HdZ6WAqtN71yjES+iaUkuaQLR+W4DXWVud2xo7KnNeih1lagGwgvuALV6zs+BKY6hsdq5ircUJScCNGVqbJUjmVyTlAsDKf7cRdvjk4rrovmkOfFcSTI/NSC2M4pPFmM+0SUoSMsL6xUxCW7MOD6Z9j5KbMWmhO6Oi5JqEkchgTi0DNTsiJ7Go4PoWud590VEQkiHT5ni/2ioDWAbim8FUDndSwN0DBGKUDj3sRkixVLAMU0Qx+KpfNJ8lMCFM+lEkAzPrUDUL62SyCNlqV1UZcx3dDGY8n+U5SsYT2nMZQcoNidCOrIOahPYa7nXmsYX0mFW55KdxFVT3/ip9CC07wG1jGAbiC8AUATzDrHsWRZcXCnAzdMlvHCHq0Wh3f0yX8KUI49oYtXFs7RecEAmnGpJYAij13PmKRBv2WPOWtE8jrP8qCEe9iTAChZ44UYw9dHMU+A3Rig2byQ47d8ZoStt/EKI34KzZM6hL1xqwF0A+HVAYoPpLM5lgEoP8yLkVu9oFPE1cUDbRdWLlldMhOGKRzKUoDmPGoHoAx03hUX8zmASlmo0gGfYoDUKDn4NXO8HvSeaYZh0aEi0JXQAF72usI3SsTkBoDSNIp3lNRKOXiBtxtANxDeAqBFCox2LF1WAyjZmfelAFA+vfCbRLGULqGsw56xu/B5awSgPC6uBFCybKzKfajS4dp8LctqRGEM0BSf1Uc78DEukftk90Ixcb5P36b4SZffpBv9VgPoBsLrA7S8ihrvWA6g7KyHr+fqz4gz4sObNEDLunyxAS7jB+mz7nDhLQFKOuaHE9e00UPZCIDG6+oYOIkR5uA6AgEo9TV2QAUobR/Vy6YGOXjsHi8tauuREKQnGDWAbiJ83QEKg0wBaHHgjwSoaFXuSOsqpQRAs94I4Q0BSvrl4ocdMoXOA2g4rc4tQE9LUOTUkH11kZcgflo4nxoB0LxuORJk6WwA3VB4E4DO7lgNQDXdIsunArRkdZ3rFdl5Z71wGwCFE9d8mQkAdYFzcJR0VIlX0QAqHPG+THzpfnF/5HsZoPFVGqDIcwPohsIbAHQBx7IApYuS1EnRaOFEQ3VWqUsAWrdwx6+bAWi5y+T8uB6gPl5X94HC/Mqh9GSoHS9NyjJl4ieFk85Gh5XS1GtXBiiIoQoG0A2Erz1AfQ6gZwnzogtkqJ/IHbweJdwMQCu6TKhXF0q8so085FKqKz7CVrksEi+Mz5l7sgLVLtYkLrRmACquiBpAtxC+BIA6fNDfFUD7a3EDQEcLNwLQui7PAdCaKuhV4mw/nmnXONFbzcfm0MlQmu98+ZwDKH7TFyYVDaCrCF9/gE65QVEnzIoukqEI0MoLBBcL0KorKHD/O14uVYVrHCa6xbIEoDMIs1tffWFS0QC6ivBFAHT0DYo6YVZ0GYAOH5+pnXWXBVDQrQRoJKhyuiwK1zgRdEslAKDjrpVPHVQG0JWELwCgE25QVArTostkqAdo9aTbLUBJ0UkArRMmBM1eF5kZoHDxYI1BZQBdSfhSADpNt4HUD9/UPEX4kgBaLwxXIgur1nkdRtcODKDr67bhsAE0V3ShDBW+6icjfM0BOl43XA2J98SzYV0KoKtEwgC6kvAlAHTC9bVKYVJ0qdQXvqkiLWwA1YXdcFXcAJquv5hjG+m24bABNFd0MYBOfUJ/EYC+dvP9P9o5QOMF0Hxc5wZofIbJALq+bhsO7xWgk3VbcNh3I/i5OEDvPXV1DQBacQV0dofhGSYD6Pq6bThsAJ1LeJXULwHQl66uBUBrHhxdAqDOALqNbhsOG0DnEt4rQF+7eU0AWvHg6OwAnfAhewPoTLptOGwAnUt4pwA9nMD/t9fhGujR1gYo3LYygK6v24bDBtC5hHcK0GeuHr8WN5GOtg1AlxCOhUlFA+gqwgbQTYT3CdBXDqfvGKBvH+xs4S3MLfdYV6pBt3qbZmZmM9nZk/f1Jx77UndtALq+GUDNzPZrZ0/eZ64+c02eA51buE43XDSwU/j1ddtw2E7h5xLe4yn8S6f77wbQyboG0O1023DYADqX8A4B+trNwwm8AfR8XQPoBrptOGwAnUt4hwB96Srae79pAJ2uawDdQLcNhw2gcwkbQBfp8VbC7Q0qA+hKwgbQTYR3CNDB7BT+XF0D6Aa6bThsAJ1L2AC6SI+3Em5vUBlAVxI2gG4ibABdpMdbCbc3qAygKwkbQDcRNoAu0uOthNsbVAbQlYQNoJsI7xegms3d5fZCOaeuAXQD3TYcNoDOJWwAXaTHWwm3N6gMoCsJG0A3ETaALtLjrYTbG1QG0JWEDaCbCBtAF+nxVsLtDSoDQE4VlAAAIABJREFU6ErCBtBNhA2gi/R4K+H2BpUBdCVhA+gmwgbQRXq8lXB7g8oAupKwAXQTYQPoIj3eSri9QWUAXUnYALqJsAF0kR5vJdzeoDKAriRsAN1E2AC6SI+3Em5vUBlAVxI2gG4ibABdpMdbCbc3qAygKwkbQDcRNoAu0uOthNsbVAbQlYQNoJsIG0AX6fFWwu0NKgPoSsIG0E2EDaCL9Hgr4fYGlQF0JWED6CbCBtBFeryVcHuDygC6krABdBNhA+giPd5KuL1BZQBdSdgAuomwAXSRHm8l3N6gMoCuJGwA3UT4egHUzMzM7JqbrUAv6Ki8cIbaiOTuHLYV6FzC12sFOneX2wvlnLoG0A1023DYADqXsAF0kR5vJdzeoDKAriRsAN1E2AC6SI+3Em5vUBlAVxI2gG4ibABdpMdbCbc3qAygKwkbQDcRNoAu0uOthNsbVAbQlYQNoJsIG0AX6fFWwu0NKgPoSsIG0E2EDaCL9Hgr4fYGlQF0JWED6CbCBtBFeryVcHuDygC6krABdBNhA+giPd5KuL1BZQBdSdgAuomwAXSRHm8l3N6gMoCuJGwA3UTYALpIj7cSbm9QGUBXEjaAbiJsAF2kx1sJtzeoDKArCRtANxE2gC7S462E2xtUBtCVhA2gmwgbQBfp8VbC7Q0qA+hKwgbQTYQNoIv0eCvh9gaVAXQlYQPoJsIG0EV6vJVwe4PKALqSsAF0E2ED6CI93kq4vUFlAF1J2AC6ibABdJEebyXc3qAygK4kbADdRNgAukiPtxJub1AZQFcSNoBuImwAXaTHWwm3N6gMoCsJG0A3ETaALtLjrYTbG1QG0JWEDaCbCBtAF+nxVsLtDSoD6ErCBtBNhK8XQM3MzMyuuRlAzczMzCaaAdTMzMxsohlAzczMzCaaAdTMzMxsohlAzczMzCaaAdTMzMxsohlAzczMzCaaAdTMzMxsohlAzczMzCaaAdTMzMxsohlAzczMzCaaAdTMzMxsohlAzczMzCbacgC9bdaaWYaaN8tQ62YAvVyzDDVvlqHWzQB6uWYZat4sQ62bAfRyzTLUvFmGWjcD6OWaZah5swy1bgbQyzXLUPNmGWrdDKCXa5ah5s0y1LoZQC/XLEPNm2WodTOAXq5Zhpo3y1DrZgC9XLMMNW+WodbNAHq5Zhlq3ixDrZsB9HLNMtS8WYZaNwPo5ZplqHmzDLVuBtDLNctQ82YZat0MoJdrlqHmzTLUuhlAL9csQ82bZah1M4Aq9vyjN3p78698/fD22x+4Ed7/0vH9YcOb/oRUeOGzN96zhaPn2W4zVMoP23+0v/3cYduDv/jH2zk9yfaaodsv/NF/coj/L/zz0xs0X+Dltz53LPEPY4a0LTswA6hicQLeuPHWr+MJeuPGKf0CoIcKb91V2k+22wyV8sP2nw5wg/3ivtK0+wy9hc2X8PKFz4WMPPihfo/csgszgCr2/KMDDr/26HFlCfk/vH/bbQWgT77pHz/4L1Z28nzbbYZK+WH7b3/7gzce/JV/c/v23/3R3g50O83Q4YD11uNi/2sf5PNleHkocMrI7b/95Rs3Pnxb3bIPM4AqFifg7eeOSxqU/+cfPb7kAP32B9761dNI2ZftNkOl/LD9t5+M2PzWB/eVp51m6LkQ8G9/4LiwkAB98sZbwtWUp/uycss+zACqGEzAU75F/jlAn7vxHrEo3YHtNkOl/LD9PVVD1V2dKuw0Q0/Hw9ST9BQhJgiy0DNWbtmJGUAVS0/QfkXDafnkIeFP7um8o7fdZqiUH7b/aXyH78ld3e7baYb6NEQTAH0anwf83fEfuWUnZgBVDJ8CHl7F/L/wVfUa6Kn4c3s67+httxkq5Yfuf+Gz+Ni2rzztNEPf/sBwQTO8pQClGTma3LIXM4AqFibgcUK+h97lfWv/3AwB6NN9oR2dd/S22wyV8kP308zg8/n2ba8Z+tYHj8n4hX/WQ5QDVM6VHc6ewQygiiUfk3nzh5TnQF/47HBdfE/nhkfbbYZK+aH7abYMoKvYC1/7IDw2JgE6vH+6T9J7lC17MQOoYnEC9g8C99l94Q9vhKMkn5Knyzfsus8ObLcZKuWH7rcV6Eb2t8eH6dk9A7oCRQDlW/ZiBlDF4BrayUL+nw4PqFGAPh2XOzu7jLPbDJXyQ/fbNdDt7Fsf0O7C04wcr4DJLXsxA6hiiQl6OEvvXxCAoitwu3rE8PoBNOaH7be78CsbWvMPd/ni+/4EgNxzP6VHbtmJGUAVS03QAyvfRjYc7bmQ+p09YngNARryw/bbc6ArG1pPngDK39MsnHApt+zEDKCKpSZoOEkkAI0PgO7uG0V2m6FSfth+9CkX+yTSKvZ0vB/w5Cne8bNFYY6gzx19q98kt+zDDKCKJSfo8TO+X6cARa939RG029cRoEN+OEDD56yPn4V/y45uIe0WoMfnQI8PRHzrc/2NvecPcf9fD3//9oMDWY8Z+cXTls/duPHgh9Ut+zADqGLJCXocCfTBww+jizeHnftJ/O3rCNAhPxyg6Jt+7NuYVrH+OdAbEYXPheciwon6C38Qp9DwHYNyyy7MAKpYeoL29ykQQD+Ebh8eDqI7Pj/stnan3kr5EQC17wNd21742i8fn8uNH0fqvx/0zei7Pv/uj/4hKaFt2YEZQC/XLEPNm2WodTOAXq5Zhpo3y1DrZgC9XLMMNW+WodbNAHq5Zhlq3ixDrZsB9HLNMtS8WYZaNwPo5ZplqHmzDLVuBtDLNctQ82YZat0MoJdrlqHmzTLUuhlAL9csQ82bZah1M4BerlmGmjfLUOtmAL1csww1b5ah1s0AerlmGWreLEOtmwH0cs0y1LxZhlo3A+jlmmWoebMMtW6rAdTXWF2pvuiIsmN0FxMepbtKJBbOUBuR3J3DmRRt69iux/piwgbQtYTbG1QG0JWEDaCbCO8JoK8/8fjw6t43bl5d/aPfNoCepWsA3UC3DYcNoHMJ7wmgz1wNAP3pE1cn+7QB9BxdA+gGum04bACdS3g/AL33zNUA0HtPXb3v2e7ev7167EsG0DN0DaAb6LbhsAF0LuHdAPSHn78KAH3l6r3fPP59KaxIDaCTdA2gG+i24bABdC7hvQD0pcMJ+w96YB4WoF9IlJq7y+2Fck5dA+gGum04bACdS3g3AH3fnx1WnieAvv5EvwA1gJ6pawDdQLcNhw2gcwnvBaBHGwD62s33/+gH//Tq6oDUYG8fbKKwmZmZ2V7sfID+aX8X/jNhz3iAOrfc06hmZmZmi9mZAH3l+ADTj7p73zjnLvwBoEuuubcSbu+0ZnKGlnZsI902HLZT+LmEd3gK/0pYej5zxl14A+iCwgbQDYQNoJsI7xCgr90cVp7Hi6FnALSCoO2Fck5dA+gGum04bACdS3iXAB3uwscXBtBJugbQDXTbcNgAOpfwDgF676lhBfrKla1Az9E1gG6g24bDBtC5hHcI0Hjt8xm4DT92eh7oaQCdLlyInQF0A2ED6CbCewToazevPvXseXfhTwAtE7S9UM6pO1m4FDoD6AbCBtBNhPcI0O6Vm6fHQB8Tn+is9uxIAAOoAXR93TYcNoDOJbxLgHY//dMDQn/zWVGi2jMD6BnCxevHBtANhA2gmwjvCaBlq/asB2iRoO2Fck7dyQAthc4AuoGwAXQT4csEaD//DaDThIurdwPoBsIG0E2EDaCL9Hgr4TUGVfnyhwF0A2ED6CbCBtBpPVbq7nsW1Qsfe24AnarbhsMG0LmELxugJYLmACrq7nsWVQu7HqC50BlANxA2gG4ifMkALS9BDaBSuCJ0BtANhA2gmwhfJEDD7L/mAC13b4JwzbHHALqBsAF0E+ELB2gBMUlF7VHI5mZRuXsThGuOPQbQDYQNoJsIXzRAi2s0AygXrjr2GEA3EDaAbiJsAJ3UY+3LSNacRSnHlwdoyQOuuzRA674Ze7xwe7NoTl0D6FzClw7QwmcSGwVo8sOUSwPUGUDP1G2QJwbQM4QvEaBoyk0EqJsAUFL+XICmuLE4QJF4na4BdCVhA+gmwgbQKT1WP4xTBCiqcF6O0p/kXxOgaXED6AbCBtBNhA2gU3q8NUCFnqo7P0CxoAF0km6DPDGAniF88QDNfyaxSYDGRzGVj5N2uNj8AJVelHRXAGg9QXc9i+bUNYDOJXzhAC19qFtXdE77PPh6ANUUpW75Z0vGDipnAD1bt0GeGEDPEL5eAK0z5/TXxWouvhpZlVY/00AnL3nYOVeTQZHKb53Hk7lG/DAzW8s2XoGydVT2IzX6JUX9y5zKK1CocM5BjqyfuQ9LrkCZWlrcVqAbCNsKdBPh67UCrfKMnn+vBVCKszF3Pphwlv/LApRuagKgp2V2dTB3PYvm1DWAziV83QGqTC76fWwTAOrmAOjke8d8GUjeLwlQLtYKQEccjXY9i+bUNYDOJWwAzT4RzgBKvoloG4BKjKUe0J8doKzNdB8MoBsIG0A3Eb54gOY/UpMDKK9ZAigCzqgLd546oQijoh0pmWglbD4PoOnIjQGo+jRrvV8G0Em6BtC5hK8/QPnsCpN/LEBhQbcpQDVlVLQSoE4Il3zopPfzrEC1p1nr/TKATtI1gM4lfN0BKmfXWQCNi1cFTxUARU9wTgOoWk2/u68+qxqb58JFHzqyAG0MoLXB3PUsmlPXADqX8DUHqJOoigCtuAjKAIqgpHydiN46dgS960YQtAM3EzzUHJ4ZoPQCbv4i6MoALR5Wpgi3N4vm1DWAziV8zQGqrPU4QHNL0BkAik77MbOnATTFQ83heQHqiMUgZhyOHm0G0LOEV5lFxUFgAJ1JtwWHLwSgqefdCUAdBmgSR/1ZP64ETk0DqLp/LEDd2QAtnMMbQOuEy6PAADqTbgsOrwLQvw/2/fkA6uiGwCN0ds1qaD1G684AULip5HiPaR3HcDYVoMl7QhmH1fJTAIpq+zkBqqjU+3X8GGfiWsJSAD3z0gASrhgFBtCZdFtweHGA/uR30Arn5/5mJoB6DaBkMx3H+I3DhbBcFUDh9J1eNKTXQ8vW+QJzYcdSAGWBKFwEXRugajeXA+hZuiCcOSROETaAbiLcEEB/9hF8ijgnQB3ZkAcoAVUWoHAlMAlQpkkBWiYo4pzoh9oQWd7QPaT4GQBFC/DkEtQAWiGMD8HpwuN1K0uTmgbQycINAfSOc/f/+l8G+6sX5wIoHaURoJRvuEIWoBEgIwCqVKj6BDcSzq5W5gNoyisMUHSQaRig6hGqIYCGQ2qh8Gjd2tKkpgF0snA7AL37RffABGZWTE8VoGgNWAlQcu4OPIxCvHWHqXMmQPNLVs3hePlAU00hPwVQN1w59gbQc3UH4XwApwgbQDcRbgegP/vIfb+/FEAJHxFAEQ7jfkcoBJCNJ68eGERqh5WFR5UdVYXmaj4/g4QJ8LU+ag7TXUS2BqB0AU1PPOP8V10aB1Dp4wSACj/aBihPU7LwSN360qSmAXSycEsAnXTZswKgFAXhjHhgoqNsoidWCYAi9AY4egAov/I5yBCAdssA1OE26S4qmwFoYvkdAUoUGgGo4od6zWMWgJ6n6+ljAwbQdXRbcHjxU/ilVqASoA5t5QDl7/B2BaCuBqDoHN4BQEsEDQJFgHrqJUbbLAB1EaDu0gHqztX1NPUG0HV0W3B4+ZtIj+Tx+PoTjw+vfvhbV1ePferZeoDiAdsFTABjGCdhFde5DECdAlCJXILZULNfhhRCCAAlXiU6GVvnnVNldYDyowfajC9QNAPQYzZ1gLLj5ljhDEDP1PUdufxtAF1HtwWHlwboYQn6G1mAPnM1APQbVyd77EuVAEXD9DjlwvQnACUwxQDF69QKgLLVYNzm8AUDXwPQKAAALZzDR6/Ep6SEbBmgFKUhYo4qMKeGl2MAqq3opgDUiT1rAHR4OWpi0IgZQFfRbcHhpU/hf/djzt33ro8P9mv8MaZ7z1wNAH3l6rHf7rqfPnX13m9WAxRdc4p8iQyAAhyg5CXsBYBGkHr+tBHsSAI0P3kmAxRjbW6AIgWFoApPihlSujUeoKKfqwE0cS0kbbS7qwIUhdoAOpNwOwClz9GLB+l/+PmrAaD3nrr6wvHv60/0fwvJJ0vQiMG4JxKWsEGeqgJAcRkX0Dj0mFEGtTcJoIMw4DpZFDnv8UyZAlCgMdsKwWABo36MBahwcgxA4cjH9ywBUMd0JwE0/U56Ua9bmJ14XHsD6GzCewHoS1dXn/5BD9DXnxhWns9cfWYCQGEKMIDGpRsirASrAGgkS0faisj1jsr3Zfvlam72ADMlQDVcRL57Ii3aqAcoXdhSWOGGMGk9110eoCiXZM8yAKWNnQ3QAkHnmfYMnlzYAHqGcDsAzdtL7/uzw6n742TbKIASflF09q8BnRig5JWDPxSgPgA0yuI1a8QNqTcdoHwyQFdgF4KaKJkEKOoY6rsKULwaxY55rrsNQMlRc4JwJUCTR6K08dRVADQ/TmLRPEA14VjTADpZeC8APRoD6OtPxLtIbx9Mq+Vc+HfgQNw2bBxeDjvDfw5tO73sYgGwoTRuBP4d1F18gwThn6RFgaEeUelYVewuah66SmRjKaVJ3COQCv0e3pMu8U0jTXZmTF3qFBaVXZ/BcIa7ST2W+aiocl5HFoiD2ZY2E0BfgrdjADq8o5AY5nFEBZSPcxHDjzE0NgINYtgBIwiQC9MPACowDt3CnQTGh5ZkuSxAWY+IFDSsAZT0eaylqlWooZ4oAJ2fHDymkwCqeZpqSbyeYsbPa2bphL765Yedu+/hT+hfBkoB+krVY0ziHNyj59Lp9TtyQk6uiHqHt0Qp2O+HM+2ohK4RenTOHerE8/P0uVl0JV47oJco6ZcrO/J8gEcnt/z6JDguTj9ITKApBFCkBP2I/YwlRp3C43N4Uj8XHeIxrgqaYpvscM5yH9s/4xQeJZBIauV8eLLjvFN4tbadws8k3NQp/J04u9VH6glAX7n5GL8Hn31IBrOF42/YzwCKcEKZye7FB5kOpBSAEidcxE8sk3AcWvNs9pFaFPD0wi/0D3RhetIWY29EuDqkRHTIoeFsgCIelblxqtlpQVwWoNhf7UiUMZJC1Uco5mYCqNacAXQm4ZYAeucwUt7wro9/7B0JgmKAvqSsP/Ux7+kMRxMdM4IggCMSwUlZhHpUqG+S3MzxEqC4YgoUnExEx0dpVFoA1COAErkyQGUw4PlvrBj7iReDo58DVQFKOpvBTAQozYBa68xZpIXg5OZIgLJDX7KYg7OlaQ7LBgygMws3BNAfP+Te+JXTq5980Wmfi0cA/YbKT33RIODFJwAA1EdQCeAO/zCAYlW8NkStYh8El3FRKB8KQg1o2cuyQzHUIR2gaBHrJEBpfPjrjpzCx04hl9DLqQANChGgDheS/Q6OoaiTEvMDlL7AYao0WVyrHHU7ksTRDkt5A+jMwg0B9JZ7Y/j0kf7doBGg9565eh//EFIy+Y6Odh+f1/R4BkiyFTYpp7zQIl7w+TxA8cKJeBshyNtFhVk94pEXbEKuOABodA0dQmS/AaCi+6yFfO7VBI0GKIomAigOM/6DnFGaT1g9QPU1oo48lsQEHFHsz16BspoG0JmF2wEo+TamHz/0RvmN9BGgz1y9/0eqhnSDPT3JMMRJwKiBy2e2DMSMrUeAwj4XJktQ79AcwfMDe8vd9qnzMdoTQiS0Bo5FYjP4CpsDgPJ7ZOAvOEToAY4Wc6+MFBf8jQrBr2UA6sRmzSoBisPLO6VYCCUqpQGUZFJo1zssQ2AAnVm4HYCS7wNVvxw0APSlFD/1Ma8BFM0AhQjhf/bUJ5EAwQAfBFCEKUbT8G+H6SMBSmCAXBbTlLzCnkY15IkC0NOOU1HknLK67qIo9gUBNLaQz702VMDJoR8AUBQDHCLY7FcEKFSESHgUSAJ5fQl6CiUGsQbQONJiEzUuJ2IrtfvSpKYBdLLwDgH6+hNXwR5nJRQ/BEB9ByOSwIWAAQEUauK/AqCoxxh3KpPI06Q6QONGXFBMfowSeoiI+wGbVMd534V6PgCUF8U+exIeZW0cW50JoCBIOEPvOXWBR6jbDHTImdh1nCrNJx2g9OUQGA9gxsczTbcfUyS1shwaaApAkyit+S4yeGkAnUm4HYDe/aL7ZHzzskufwr9yNQqgZOXkB4CioaXCJay7OjScMUy0KgKguDwgurcOdnKAOk8mIMGUmD9wdEAOwXxDACUyfZEOROmUxd6iaY65OT9AHQYo7QfmDAqYwwBFO4oApfF2vFjvt+YneUkcjkHtXymNh37AFypDZEkh5BUcwJHD0tmEwz58tlji1wA6k3A7AC3fRCqb5gi5TEVBoryMJQGgoh75A7VhFlFNmCdIpAMVPNUQqtgyxRE2ONY90HUMoMRTmIrBweEFAgnqIbQNsFBChpso5V7NkIvqZYBCqeEg0OF3UwEqqZQEKDmUUIAih+M/XCHeWfcJgJLQdo4Ggi2Zcd30RVtaeyhNumoAnSzcEEB//JC7/69Pr773q+pjTBMBSqc7JomCF4o91VJ7OmiOtCjhg1QAYkNtKAjuB6r5MAPYhMJOxOZRddbksB3BA/6hK14niuUBWs59NkNeAjQSgKJpOkBpeDzuCi0qXHW8HRc97kQZrXU2ImAE0EJ4R7h3h4+IqAJ2Wr+FykrFlwbQmYQbAmj/QaSHH374+Kfw6x4jAMoWGeEaFKVH4h03YAUv5weAIvyR3YLLHrhFZ/zwHi1S6Fn06V/vZPdOlgSoCANaZ4J3RI8AtKM+pxb1pdxnMxQC2KEQQlBDgNC/DKCO7MYvwDFwP4YBXCB+SwdjlZjm6DAq2ednCCzrJ4Emfo3LBEqiuEbfBnnSmuIw7j4bDjESqKYBdLJwSwDtvvPQMGAKv+0xA0AZJdKW2M2rRYCSFlMqyAO6puAApbWHEj6+8by1TgNodBhVFP2I8yzRxyFqgR8CoB7haiJAQwQ8+tUqAOLwMhZiAI1xxdiUACVdJQ0TGukADe0A5qLDuCgKE+/ncTusKpHPxGMeexYePFygsgZQUagiRUJFtQZ4ZACVdve7HzusQN/1e/IG0lSAkuP4aQM7unv4V2Vlga+oWLzAllFBRMTTjCyZQgmpRkrQReawTQAUMYKsf7Agb4A4ECJDr0s64V6vX8y9kiF0fBj+YIBGYBB0wJuuiyvUDECHFwigUd6JUoPf1EdP+hqTJwAK6WCCIZrhunroOANoKBjjQpgPofbwTnEYdwc1AcUNoDMJtwXQc0264Rwef/0WDlAVVpr5zDsy6LU9uA65OQBzMa4/nJizca5A67KH+PEoFgB+xOhL8/r0PVuBIhYrAAV+TQEoxRN9+hbDiKAOA9TFNGoADfHocCxkKPE5N3YVuhcjoAEUsAbLU9FT15ErvCRXeAHqaQmaReAs1FYAigNM4mAAnU34AgDKVmxs7rC5kTaJM7EBXU1MFA2rBgpQdMUzOCgAGo8B8B76E5uQAGVTj/gCa2Z0ooebg+Y7XBaWplR7OkCpdeQI5wFU+Cg40CAC1JP/oVgcBT4ClKafHECR32QQ0ejjxR8GKI4gMJ5mAkWSxB38jVWJi8xQEqTDuPMoLwbQ+YVbAOjd3z3+BufhX2ziVzmnARRNjriBj8cqgNYhlk1N/o4vfgJBJUA5P9GiJr736O1gXWQPCoDDYhileFUJdcBD7gGhrKY4DaCkhyRiMT5DcAgZHQIoqk6ohUKGX5BGeCeD38JFEe7YBDyAEYuEpnlPkUuQ5FiCOE3iCikRGcJdxa3hUPEyBtCZhFsA6M8+cvwJucKvck4EqPN8kHoyKsmYzFmuhM4Sdd1Az40lQDE0aE0GUHEh4vQHPbiKu0uJF0vgj0NBFaUjUdAhR9VOl3KvZAjr0P5BR8GvUIkDdNiKlluhnPdU2pPwI8dJ2JCrKD4yIgBQNxAeoZzBHAd6eEkaJTHG+8lrLIX7zghKF+u4gXyKZIY0a4BHBtBVAIoGHhpqMGUZicjUEkUThpYo6na+jSz84lQKtT3djq9/kTJKSxigZD3ppXOabx43oOyFUmQ7lxh3Fx73MOFkaJLm1fX6FCIKQKl01KLhI7u9DlC+Po7SnUfN8JaQDOkrGpceF8WdwR466j8+xJw2dKjfKFjRTxJBA+hMwi0AdD5T/HDiRjyf+hpA8Twhr5VNSYDqyzi1hTjMoVQOoKJBDaBiqmnuMOc874LmO+s3K5PPvZYhpOY5G6hf8CJuD5cUcV+hOGZnjC0KaGyXxDTqgoN0kISNoWoEqMctDH6ATOLoEPsF5XgetGCgHJz42UXfSUdQNXRoMYDOJHz9ARoHUJxyMEPJZOSjWp6xxcL9fEoN8Zwl5gVaAoVSFFNDV+hqj65kyKtQJwfQ+IkfyjDml3wDc1LpSCH32lChtaWmAhYBULIDF/P8WrF68PE+nP1LgIIX2COs5wnEoQp326cijAs6WsGJCjxog8Tx2Ml6Sr03gC4h3A5A7/4uum/044/9hzPdRJIcYl+ExOYVeps55/VxNmiVNTHZImmKAVTMtKEnHmM7vEl3QqwZyRsOUB2zaQNksUl7FkBTVAZCgas+YoZUxDLecZCE6nwJilV1gCaOcAGgQ2kfdw71wXtMa9T44D7ppiAk7x3fiEdkHBmzAzSGJ18MmwH0bOEqgJa/zm4aQOm6yScAmoGlZp5OA86pOI6T6GTfUiImRAqgZPLDdEm5me0VfGSSUEkr6bRdswIUr8SUA4E4OQ7bgwcKPwf3UCPwMQMITrjFFDX4YEeqpOto1wBQJExWklG4d0I7iOIFaGohTsYVhAICg4ddKvXF6anOIZwrUb9gBtCzhccD9McPzQxQNA06fWSNtcRakhagsxrt1L7mKd+a7/VgvqDnC0TbZT3shE/NNv0cEnwSm8YDlHB42MKPLv1mL1ocYhoBGuPhMeDQKCB9oGK8QnQVeYFd4gCNSvhhYNbFCFB20On3xeaku6gkDGTCpDWwAAAgAElEQVQWI9xkjsGl6anOITyZRP2CXRpAIcizCZcAym7An0z5PtApFlYd4QnzrhvJT6V4NwgVlOj+jr8d5wa0i92ifdN8zQvyCikBfXunNDw5Qzg/3K8ulEDtUAdIeINsvw0lilVPdYj7hz2jzUsFujFIEG+DX8SZDhXpcn6CitqFtIXAjs8Qi8Z5Atfflg+R1H9Z5vuTSsWiSY4HuZpTdFkG/XKRUlrV1Fcsw2lX2QdehUt79r4vJzaWW/LKK9G+0oCX+z3t9ejnQD3WVWNKF4yKg8wvj874w2uin1niDQLKCpR7p+efnUyDRPjbeSVhuqJ4Uhd1rmxsuR7+L6QouyyKHtgKNKkLeZ9NuAjQu//Hxz/+sYfue1f8HNKv//UUfk4BKDn7LJYhIzI/jqmcp9elsssH/YQ5CVDeEHnpFe9FIymaKADV5j4+NJRyr2UozO80yXE3PW6Xl4lOoL/kkJLgtNJ0RwcQuyIj2sf9p295cQ2g1YfWwSnuPhsyuSN7aXpmZ3UUMIAmdWOM5xMuAvRoE+8bVQJUACOznhH7dIAmhymevUQcAVS7kyAdyWxPgl90OQ3QzuVKkAVezgdOjEmfRBoCl0A1dBNxTKaFEV8GUusS7w7tS9IfelwJ1WkdrZ0u8ysH6VrMJ/1wI8EqXxenZ3ZWu+FasQE0rYuiPJdwFUDJY0xbADQ9fjWAZuqj2UuZjNzJ3URSztzlhkQfOgF3TSyshVItBD8kh8j5sARoMffKSNEbl5dIYB2a9pfxUWceD512LPX0xz7VUkwiHjc1ECcYqYoiBXqm4uUxQuwvLWaL0zM3qYMPBtCMLoryXMJVAJ3DpBv6IEoN3bLVVxPrQjKJzngUIHvpgDFRzmV1c6qhFEBJKbpALeReT5C6HtSy51UCwr5Sx+A4lgPRcWsHHqjNKZgkf2nMPMGiWgqvETWva4x91YLcHWf2VIB6A2hBN+RwTuGRAP37VQCamgDqFbaUSm4bX3LwZUjtvQDRRhageIWYrJtZxpHCcpYr3OJ1pp3CCzWPA0YWXh71QvUb/qgo8mKP52I+/GIp1fSkCpP2yp7UoUftd3oJK98nB3ZxhJWmZ25S5wCaosblATQZisUBevfL7/yb00NNP/+V9QGqAi+3UEyeROl6fEvOudz7Avl83gVFJnnASJM6jdRS7isz5MTdmOGfMImzvSPXGRIXU5PHz2F4DB8tVxSVZjt9s0MStFUv+yB2wTbRAW3waENVGTvF6Zmb1HmAjsWGVsEAqglXAvTlh07fwXR8KvS+SU8xJaentswpLjAnrhAnriuh1ThNveqnvqwY/ulSk66qZVVVLZtTmQhQfgpMdsY9GKAZJ7Q3lFC8XT5EeoCyjYp62onQWHxBN+vl1d6NObYVrTQ9lbmMshHezQNQWWP3AHVhfTancB1Af/zQ8Pj8v/udh2b7WePq4aaM0UmDdCZ+9ssM5+T5ZtUl0ElTrP7aWxq1pdwnMoQ0PL4MX/K42CetktcBS62Lq8rEEcyTykroAJWRPAkXskpcNuNzjRWnpzKXIRvxX/XSn1LVp7Gh1tgIoMSVvQL0lrs/nLnf/aJ7YE6AJocmmr5yRE9dyxUtjXW6IPOJUjUN5KvVs3Jsy4XcJzIkfUvs1JxWl5B5F+nbU22m0sUfb82dr6QGCTThvQfWerEbKoQXZf+LG5xMMD3CXQuAJhvUvajXOhOgHgLGyy78HChadc73WXg2evTB53WAjpyZcrympl1F5di6AsMiH0v4VDYhdOel83ql3OsJYq64OABZG6pr2TRp0aO6mgtHK35bgcdjhJ0o0ANz9D0N0Nqo1xZL9ao8PfU5NPyN/+oLL6XuogAdQdDWAJp2vjyJ1v02psrhJ0e0RwhT50ZuAOfL1mhkLj/wbukNZNY0XrwWoSqIJ/cVcp/PD9LHOytDPolBw5AdLxMqk8Ndxi8yinKxLuSrak86nSEtyRSl57TLAnTsuou4A4XVsmkB6mHGSs+3zgRQFw+mWlkKUN3lsLmlFagy3CpmiZcApShFJVMShe18WUXA5vneiVYA43iAQi3+ch6AgtC4zk8MVWqIVKhmfcRLerRIJj+trGqK2uONOiYzNBGg8GYOgGo1usFxtYoQwAAtVFFHHqqN6tcBdKgxBqB4M20SF1IcrgJodwtd97w16zXQ7GWs4jCl1yX1K06psTq6SVgNeQTQsyiavByG9w7Bqm4owZli7lMZ0tyuulCLniDi69VJK1K0BD3/2NXLKA6VF6CZxWomaKgIlCIoLU5Pfeaj4XF6p3FjFECJo6hwVCsaaZJoafW7UEUpFTqVdVg2nwZoIhTUR72QK2coBdCXnfv5759evfrns38bU3HE1ewaoaeIVtXFjaVqEi+SPqnTR1RHMnn/2NdQC3XA/kiAel3nfH6JK6jipV7N+dKhL98Wb6kKm6IWkx5xYB6K6AmNaUmmKD3zsYrghk9RIwlQdRE2CqDOo54WlqNSGN4w+k8AKPYjKNIXrHmXOOLUZCj5HOitg+p9Dz/88EOHv5MWoFW3KPLDjr5HP59UrqzIFXajGaYX7bfmb2eovVRaoRs4VjWVlOyxqILn6M2Ub6QfSyzwMflZh0JchBB/MaZiAla0VJ0/RYDWXaVNDYvi9NQyBIezkK2O7c6su5L3pbA/sTCSy1v0JrZcBChpD71BQkmH1R54FaAAdidaJGBV/EQYx87XAfTuX4Qs3/dfTeLnmBNEGA0OjY4CcPNypa361NAmFrn0UP2lSbIpuXiRG0Jik1qyFqbvTAAdZaRG5sNiQrnqGwjG3EZKQCrVfrUPxXbz+7K7CynSMuRx1dO85wDFf5iNBqi2XXfJw+IYNa/W74XpMpUsG0cCNFSXAA3/hyMfqoJ/OJVXQ5ujw+BRFUAPCP3uxw4r0Hf9q6lfy5ToZ3HgoQHCtyoAnbhYOndejj6trGxRJ2NlHdZIMffFDI019dvhuJdsc+GQ0utWtV5wXyPpTL8oU2408b6UohQsHJr88dtSCQ7GAdRT0VDYjwFoIKgjK2C1/gBQSlnsdgVAsWqoHgEaiehgFUrBjACKnUeLYdzAJIDW2k9/6+rq6lPPTgDoqNNdOE6ScSiIU7dKrbchlnnn6L5k03qlGZyMUvSHQgu5L2ZorIdJgPrxh5wJVneIwiNmpHSxfM3RgDqTT5EKDlxVEiq8qweog0MvK6zI6xZLoeIUYmjbSbjfeBZA8XLSA0CDFgQKy0NtAVAfC1MX/LIAfe3m1dEe+9JogGbv65yCkhx+GRJVTdQRkxmFuL7SqNbqTtVrylClYu7LGRpnPvXbQPHK1hixCXtKO/OFp/WerflHVi6kKMkOmONYCE/8MQDFizRc2LMz7ZSh3vQhYd7h6w2DMF+mxg3kdPpsgMZlVygZa3Sdg9bxq1CdRyK+zgP07u9+/NdePP6LLfPtyveeunr/s91PD//+aOT09OwvH1qpXckdqauMnhcZNZvjqKioIju5tDEEeD6fz7oGWrnsAssB1HlNLr3oJcOj/npp1SWBfIv1lh9rNU0WUqRliJ6jHrvcgRTiiso9/Utg4RyLFhYryIS5+EQtBjqKD3MOnajE/tB1nw5QeqAgsqd3ANA42tgBBvT7jwdTj8mqlUUCXucB+rOPHL+Fif00Z+ZB+tduvvebhz+vPyGWoGqcUeRKY4sd3PE/sdOsTkqoUER3YMRW1Fh+eTRmfrHVZEWhYQMdthMeYyq1kd6dBGhKuByQeoBW2pRDXCr6fLty2SkrW5qeaoYkQBFNJCuIqQAF1WkAPVbsQvWh32wwweDqhckoddBKCaD4QEH7HABKQs8LoosGEaDCQ5KbGAkUwlkB+srV48c/h4XoF2oBWjWC0+fNcOBIrWmpThWI5E614VxLSmsZhaLpx4jKWtGbRQA6jhJODUv1QJh6iThZrSKNokq6YM0xPLmrOD3VDAWQBNUBdGQJJ9ZQUV6blPEfNLU8XKqsAiier4FT0G00uHxcgaJhgf0IXtEgBTlPC0R3EwANMYI6w6v+ej2qAA7SVodIoBBmATrWRq5AKwdbXICy5Q0cESE8WU3RbG6EJ/jh8QCLKmpvZjyDHwFQL14Mbwu5L2ZojKO5EsVEzRM2toAYVT67J1OQ45hO4JJIaXrKDHkgWmwSPa/p8C5UA+Q1PQ/xCsNg8MtVAPRYLXxfFsK65wCFPneo88nQsiAFOXiNIDBs6PhMJd54F5egx7Id7rYYMDR2CwI0XgN9PGx5+2BKYeQgeS+vnXXof7YHbS6f2eFGtdLMpaIGVNML841dL5CT162r7mK6zPhsjnBQeJorkSnSJd+cY2M7M6RIbOEvWSnSSge7+Pacm6NT1M+AbtDuYC4Ne49/YHtHm+FNuqjXgUuO1k04igqFUrG/MEHon1iWuJcJDm4bR6yXlD7TpiArXQwYDlN6aCbCpUShWKJg975xugv/6XgPKQ1Q7iCJqNIFNbZjJwZNKp+wsDctLd2TaQqbEwo5ed2q8JzfvCBAOWkKFcsllG50ie28eV2rojNlp6MYlS6/JryYM0F0UiB+xANA/xohirSD34AT8V9wHRdHlQiLccsYoD096bIBHaEwqrtAQTkFOywO/lLHOtiGXGeJwKQMjg1VkqntYoFSPviGV/9e2vczAq99/gTQ94kHQfW1fjD8Xl/JJ1b3Hv1bce5HT/bpVQGPNycaQrXJmQHrjVY1MW34CYa+32sFRp7pls4+8hmqb6bKlXLJUmDGtE77UqeXqsFHLt6fUqa5T5UKaUmmSGaITaK+MQ8jdDhX9eHHRz1uyB8/bMuV4NQ4euvDKXzcgSqQ+ngW49NpdnWTvvbxGhgSJVGJDeEWcfNht48Dy58CwbRCM3Sun952cIuM+KdcCx57E0la9i78cfF5WIZWXAPFQw+PBX3qwjUesZkSUa0ZXpHiaYanpHQTANUd6PA7z3bqLdY50el6YjgUcp+fnZUXdLXsKNt1gOayOKNV9YQOz3TtikMBA2iy+eL0TMyhwYPwNj6vGSQjV/rXAD2HPsDIMCfmIAcodzv4EMIB89WTPkuAklYcNMJcgY3YO2gc9Ro3g4MRAoX8DIeWrqP1Y00MqJiV9CQ6F6DPXH1m+Ps425PIvUfOQsj1IcayjOqHvhcGsmyMjYPTho6XL1jwatS8Rwf4QiE2JhLlNwSoOGpXBy6/gR7PUoMir6iXmnAoSNWu0KoeF8XpKTNEAOp0gMbgUQId3x1v9oCQBlA5nBQWxlbQGKXTkfAVVQNVvKqByeShL33pjniHADqIuFg6RAV6HUqQoA2lO3TLnjkdGoK4jXmQ/t/95cn+wrn7fu1f/+Vf/vfvcPd94q+SD9Lfe2pYeb52kz9Jn8h9jCxFmdOMZTnWR8cJtZ5gUGybeCHX8HXmdc+IY0mXsu1RWVZUi0NwJ+FkPvdKhjyTyHal7CTbJ3eSro4HaE0Z4dTYjPuqoEwaSKXpKTPEww2B81ExAoctTDmD2GhTj9doitDG+RzWzybImIIS0VfHKiHHEUBj0TCopY9oKGGAKkUHaQ2g3E/ISnoSJa6SHhaijwwvv5NbgI4CKDt8uhAeJxIR++l4mljEtRAo01Q5PMlzk9xkFONWjB/pPa/u2XutmSJAyWjM06qY+/z0TH+Z8Qhq1ZYU5ZR5otWcQC1i8eRDrL5TkysV9ypXJP/yKcpnKC4IYDTGQT28hWXeaUvYhmeB6LKnb5GnDhdAk4n8S0coWSfJvov4xG4M5cPjmkSSOcIcRc2x1uNn1Xx4oEuvSdwpTKIEQG9FfnbdndwXgo45hfe4M70lABpj5RzPJA9YjfkAUOyGF+qKF0k95eiWriu64GW5DrmESzH35MDP+FjIvZogOijFStvTf7IOsO7WW2BAuaDG3szxaZQL6e05uOo66HSV1sinKDeHEDcZQHFJjxqCw7tnKSXr1QhQdiEXJ5R2C4eGolmf9cgluU0UZqMPd600RAh4w3+xc3yECdZDVtKTSAfo3S+S30R6Y/qz8K9cjbyJJELpHQ8tFCGIC/msmVlqHPmxFw8l/dwoJReHrWhBlFXFEgAVvPIkDrhOMQQVudcSxJIU3U9AXWlXvHBxdpcrUf/LfayWG2uev8H90oer6jAbGOcDlAw6D5Ed9sAClB2M+8L9JhFbPLZgzRpXNwKFqqUAqvc9jDc+TiTTMLfJlFV1ebfiyPND18FLpTExUYuTSAfoiF/lfOmqt8/wHbnUZ7stu9C/KgHUkz9UQojxIyRffdG1jXqcVNBbntBJ0HZxu3Ji4fV9eSvmXpueGkBz/alLpO52Kr7gfoVsuXlfGbbkQVBOq0QjsD15aYA3mU9RPj8eH/FgNOKSbLkAruruUd+YcEUUBEBjFj3nU++hjAdzMNuC5oTnr0mbqQmISyJ/g58TAFr/q5z//vh9oL9Z+X2gcs5kpijJQO0K1JOyUMHHIy86CGGeOjKF1CUTCikeYCOgll40DQCVA0KeJtW3NQGgoq0KoOAm6zcnT+5cSEEV9hL+UNBUKNUWSx8m9V5SZ5Q2J5zC46FH+eaDqI8AjcMdphymnE/kmZRxSg7VSAi8kVICoFwCraeTuRD0z+MAL5mG7irgTsqXJlHyGugyv8qp8CH2lEc6DAEG0MI4VwAal/Icmo69hEHn+JghFOMH94QTzANlyHm6XxEbAlcHE9HoWIAqzhV+BErzOVVOupfcm+qzviXffmXo6vjptPkXt9fVp22ecxc+EAFzWsw3IKt0AXutABK/yAx36hKSlqOZdD1syRxJyZ5wrGBqhbjLDirTU2NC5M+0X+V8d3/h8+6cv8qJko2OjMhZEi6GjjRA8XG5/0d+EiQsQHF1XpY46ZVUMUGBWSKseFgEqDLkOK5VWc2D0uxcGaA49aFrulyQ1AIr+MNVuVpxExebZnxUVeE0pGUMQDODDZZMTkbXq6/DikwVilu9sjfZJ9q/dCmY3RToSmGP3KDta+U1OpQYy5apuN1pAD39Kuc7P/7xj7/j8PfdU/hZukXBXFdmIgcoiSc5/mhnF1oUh3/IePBZgGaOiHKKsxGnOk29E8dEFI7QS+oEp3/SvfLsrJqe8bvS1DZSAE2Na9YVXdm7TOq98j7rYSiI/iaaJUMxaxqZtWNsWWg8QLNqDg2YyqNBwIs+yPTDXM4LLcOSeLFVysa0i/rZG11WpGadBkcmRaZVCEfAxSSAHheegz2SKDIHQOGbuIYOoiiHTXmAarLKW++Bn+lEoHmbm2qxefVgqPAxZbxOHPyI4ymAihZ4r6cAVLrYZZqIAZOb9S6KIySVjiFPAVR0XwMoTCq8rkB/E2lBR+RKS3DGn8Y18iMtMCtAI0ETDevwCNMofVjJXjJMeFIoN4gmhg8IEBll3ta5UV2SFY4HpElfZ/fql99xqP+GT+S+SeQcgJ5eUoCixV8opAE07KkPpAvrVDYKY6TwMAoQ0wMMpZzSH1kx45C2FUUA/GXVqr41KeZ7DEA197Ic0GdAYZ6jsMe3cZWBs1tc/KSKpV3WskTmS/aglDNStPOyrhxVxRRlAJplExqdleRIsbkI7Zx0umJIXM5DHsJcNhOty1GcLI3/0gPjVICea0mA4uNJR8lKASpmNeuXc7h0KUDewxMeSIVoBGYhX5wjJeJrj+ujZlgCpB/8vILuRmOqFqBppULulQxJFGo9YAWUMqMAil8BQDUyS4BKj/QtaA9nkIiveJuGlVJrGNcaoVGbQ8uFFMkMSeeVGCmH91wH9KGckq+3LEDRv45FmMRo7BdVCBnabHLuqYe7itO4LEDvTl19pgDKh5IXK1A8QGI1MU4pBR2LeSKeoEh0hi9jiKEN+9WphJScS406ba2hl8EvPDgEKzPkLpKoWIFCvtO5T89O0tX8Qk4FaNazlAx+IYeLCxOd1uOKajN4s8huKonErbwRiZCtROSIcClFMkPJcFMHcgdptVoyXKltWe3auJWbHhYL6fktljCJM9ZEiyWgFidRGqDf/ejxa5h+9p9/Iv0xpJEAlcmH39GjqwFPAcpDwSjocgGGYwmiCtQbAIqGRW5ChQ8MFQCq+CKySo4UsYQnhxPeU+yEEhYiH/Odzr2WoJxpTY4HqD5c+fFkGC5eKYRzrVEqf5rr+fzP9Fvboz3DpMZOzmN2DA4V5wEocyhRLHXoTYVA4yvvqz788g7q1RQN+Vn4gkwxRHnyw7+YoJNvIh0A+hF3f+4x+pEA5f6ST/QLZlLYsaMCq5aMDpODcRjXOPT3+ZijTLFDm7WSYmxRx+JoSB52PanH4hGcQEcADDOiE/Kdzr2eIc8JA5qqw7T/cZvXz8Gd6i9cFImdUiaC4piXezqUb9GQIkKyyAYpdULra5QIwYPMMS816pRSpGRohqOVXsxrn+KIHSRbR/pQ6QDfggCqxDRENX34rGolXeBMgN5y7v7/8qGf+5u7/51zmY/CjwcoHcwdYIwDNLwL2YWZwUYSjF4yJ0VEmStRIn5HIioWXokI418f1IczY6qcNzpAwwePyaTHXIvbyDdvJ6YUync693qGQvjxv+BapsMcoM7pozkFUNjkSb9kTuVEx76hcw2lvDLjcgBFtTsSDKHhwxFDTHa+ARfKp0jJ0BL0ok6x7cR35VAgCs/mkJJm0VihjK5cbMqTfRMfpP+N4UPw33lorgfpKQgcANTD0IQxUg1QQj8Zg14BfUQYQNHX6jrSLBLTRiuhSwagqF84G/EfAhLNbdRTAVAQS5wtoXync59IUAi5w61SSKmDFMEP+u9FAbEw9LErGNgyuOlPHdIgSIDSokwAF2Tjio5W9EQs1Ubf8gWpQoHieToPoEqfqrDBKrB3R+G0NnE9h8kZCcoyEVtX2uKt5leh2qTmB0Sya/LX2Q3fIpL9OrvRAMX+MYAiZoLzKCRsLUn7SCJB8JQaFrFah94kpxNFQYZdccKoPxqAvIfJhYLicUkEUOQI+xJAEgjevQlfZ0d65eN0D7vVHtMOJAGKHKYwRhF3tC7zRXeA+awBNOk3HZhsXJGSXbIc2jBEK8BWAyjKZylFMkOJCIwnFxt9OQ0WW806dll+rDNKrlKzC9VJ7iq0Vt5EEDT56+wGgBa+TGQKQCPuOlj0IIfRIQeO1KJXjtVBPSeF9ZgRjxL8YADAlaVTpHXnNYB6mNtRJOEieIObGWrAV9/RipRWxdwn84M6yQGaMemQXgeDcejcEAAcGUkLH79XTesrfotHSCKB/R9y7uHwSGLD8lRYKxeKxeaQz8R9jxan6FU+RTJDKYBmbDrXRPXkfOjkt/co9fFRJdVEvV+jV90j2jkXoD06B4Dmv85uNEDjhIkADdMmOoxmbajAljJ0Ax718fhF2vLsFB45FKcb9gLaSccXhrNKiQhQNpjiPKAUZZ85j7OSTFXoGZ2qbJhDjKYBNISw9wvnRbTLoxJyh3vKyshDHz6OxSZkVeyWHA+sDc/KETHP6qpgpMOKAJRM31Md6jpxGHfNx5coSed+EqkTAZnTPPqTnA8BoOpMQPNpTr+SYnJWnNFuaRJtAlAIKPrhP3RWgyaL0wAqgYriRKYZTGWESeJQ+HJ/No+wsAw/Gk2JMeU5QKHvseFQ/bQLAVR4zJoF3wDgjNKxnfFfqAwN+gD2sF2LPfYZXJEAxezBUQKY5Nd/MVRxmFAVNATQAhaiz9eoEE7cYXUUuNQGhwYncSDsIHVRcwsAdOJJfHWRfOnCk8me/EkWkORLV0vMO0fHV96tjCu4nUmn8McbRwM5X552Gz6VfMJH/ARR/EODEHqhvydMQf33HKDqEtQxgMKoJuqpDPrsTgRQz3YBIGCv6GEoyxlEZ6qcrLWzMwvQmIQO/TAu6TfvMPaIahH3cTRiKFys5YmaaCL+IcI4Y0yL7qCexAhTIQAoad252HGadD+MLkiE7zpeKnQUDbzY4DkAHVI0yeQhJVeitHOiE9X61btTGUxvS1QPb6fcRDrdOOoBeoDppJtI0nqPjn/h9elN/xaKEBtKkF39eyREizu0o3OxvuaRdBH7Ck4qfnWxJ3I/aUHZhXs7/CUes1ZQJPD+qIBbgTbPTxXEExyBXtEgxSIsqlBE9A5HqCt/vmooEpKEX9Ngdk5EWUliyDbzh+aBjtpObbELO2JguljcxebRPi40PjMkqErfaq0i5rH7YlfHCqV2p/awOV1ypbYUymDW62L18DafD33zjx9y737xBNCf/KpD304/wpIHT7zoPN2883It4FBZsjQJ233coxR36EADB/q4wsAOeboClesm4hdbeMRXaOELlZRroEgPVMnKyvEKPqoTMbIM88Ib6MikFainsSZNe7JoxJ4MC68YcKwFqzwepsR6E4ciDunoF0kKypg/fTshhBfvkOKxXTo6pAOwXEUNyiEYO4NWoLGBYQurmk+RzJAWp5pP9sqyoJRblMFaWewpCfjUvvAFkmRAVVpFUZqP8QpskhcmUYqwdw61H37ovne9w039Pjs1+XB2OEwNmAtoYKFxD93o8DfcoDM12XcYtxEnvbbmjwBoJByeV2qePG6CRh90UUIYNWL90JWgBYUc2eRYO/9/e+f2K0mSF+ZcLmYtzMwKMIvMyg9IzjPTfeDBF4GMJR582NkZGh7cs8uysxJYNg/G8oMlemGZQWsbmYtky2cGaAZsdsagNeL0gOnkwHbjnlP/mvMa8fvFJS+RmVVZVd8nzZzKzIhfREZkfBV5qWwRXtTRnmMO9X1wdJoPsat5VhPaKVVvygumMmhm/y/7VcvYtLdt267c7iEZLU352dbD/CJBHkiBPpQtbDvaSSjGYiF31ktoq2sbIihQeZx33RLtIr+HpsgmgHCt8502RJ9AAyMxns9PMXOf/HhO2ZPDy6+GgR6K/xb+f3+qC7Lg+0Azd4SEBeocKF3FXRnpbjMDzMg1MwWa2G6F2sBuJU09Mq8yslL2ryPQwsbVVcnMBxtVCdS6RpbaCa1Q5ZjwjlfMpQcAACAASURBVA3axcG+93tI7a+tj9sdog9VK+x2YvdlzKzQLSAaUWi1KGRYmWNnIojWL5zC2oWdjuXsVLgDRWIvofyGiAhUlNKkkQIVnS3KkbuROgNNEE9QoOaojWYrgv+KicrvNdvYKolejwYP5uqrjUjnZBuRy+3Z5PeBfk8Z4Vs//Rtp/owL1M7tbB1NXa1ArV66ipv9tyaVx6L6X9ciNrIzSGyhTlWlQvy6uOq2WWQ3FDZuQKB+xU1zaIEq46pcjoPFoHR3c5pAHS/L3VE6dwTabt/tRN11TPfINF1jO9UWL3fUNpg/MZCfewUqEphutF0kd1zGFXWuE4tmtynF525FZn7cpntK1lIe6HNP4dPwIxXxTcOx3LrFahooVg7aQNZgpL7S9KGryx0hULUnQz205/eBGlN0f8WxrY5duxMjBaqOVtEi2iauQNvAbjXtge6OVbfLRA5ZLxG3jSJyiIp3w9k2hw5stos9sYlkK6ktcm8mCtQRc6brYo4zU2nRieZaZSik01myFXWfq//LSuhspkZezY1ARVDZVLKB9QMYMpLesZhA/Z1tMrYCVT2lNL4BgcYdl2BQ/6CJxYh4u+hJExSoU3gkhdvrXqyInJ0jLeGnnMkTzykClYe2f0xmzk6Ig7Lbd3G4F3rECJmqGnjVCQnUtLsWaJ1Y9YcKa3ujEHF9gcohZcuwApUxpLGtpyICtQ0smCpQufvKbcpmhd2RTNQkKlB9YNp1vhJNFUyLdSlFKF1XveC+7kW2t/ggukgWrZtAB866fgzlEauy7tKUagyn1osLNLpJdICzfkmB9mtvyFsRrY4uejh1JMlgxoEeij5In/YCkSGB2iNgpEDFced+qyuBqqxZ1s0WvGNcD7gusH+M+jOjzBGo2Kh2zK5WAi1MrVUFbHolUGe0qbj1mbLaaVlLb48nC7RrNnvQ2ZrIo1FUzmzfOXuoMxZOXNGSquxCl9Cl0h0hdlgviJcmOZu6KGJghAVaOLVqW68YKdAiJFCnOnI/FhLo8JZC/3F7dH94pUXlv7MpUr484kXsRj49O9BDvb9EWkeg3XEsjZIFD7QsJlB9dm52M5MFWAnqOsgjsQscOEj1GLKBdn7rFjqVE1cK1B9+Nr1tDrFrJroqzf955aICNVUJTIbF2PNKL2ICdesovp50Q8oe7ARqqiJCxSre7XBXU1UDU3ZUoMGxIwO7q0JVaYo2Jwli1yINMlOgEXcUzt++NOF0qxg1brrIbgjPhVLEdzPYUHJl6IGuUAn9PdT7MpFVBWrmBLEj0ROoce00gQbrID8FqioKaZbt/EY2uxOp6woVd4RAze51tXZmoE4TZeanJzZIeBfruPLzWIGa6wrqS8QeazGBZk5VAhtMdvlV5FbdrBVDrr8ItcNu2MIcS+ZP1yBeLQO1MoG9kOGdtaIWneGklZlXeIxp2kx1b9PPQPUL9cfbOiDQvrLaEs1nJdAilDi40N9D8V8iffvci6DBQ8scAWJoFD0CzewWJVAhR5HXF6gf2D+ie19LZJK2n8V5XECgusI7W5vOSt4ItH1kuzmTOyX216zZuWNzWYEagyrDd03qC03vTziermw2RqD1B509ixahdziQLutGkKxNz3Vgv5SdbtpYRcYJVGZPnoH2WHLSpjSBjsnkpunNE1L72DPtqXXRh5/WuBmsZmRNF+g3v5Zl3/p9P9byLxb6Lbw+BmoVZEVcoPo4jgtUppfHWHgc2LFoWiRStE1rs3XukvO+UQIVA8tmE+m1QNXAk1UpAgJ1Bud8gZrjqGifYdctImqtWljtfSBc97mJIt+e4lZddHKzw6Zj43WWO5yZo0NWYrxAg3bc6SaP1cV8/6lu85OLWshCpgg0Trp1+ksY6e8RwQJzUbHGOEL/o3JjS5+w+6Gkhf071EPxm0iSxd7GZA6xunpmeGaRg9HbMbPSHn8ybybVGhOoeeuPbZFI2VbIovk6G4rISg52vSdQpzraqDtrSlegjpky0wJqt73adBUWn8f2UKfywv7Y1vlK6WqkdinY3Ca52m17t1zvmUhTFIUseaQ/owI1X0+iMtMFmsW3i52wTSX2yE8oamwKGRZo3EqF98lNOuZXn13rDScdFyu+ye0Su2RWuhUe3sWe2vjpi6E4Qz10IIGaGu8c6QQT6p1pP3YrtJKUQEUm78AVW6IPRBpbyOYrzGCOCdSJa9a59QkJVO6E2iVnNx3HLi7QZleqWDunCnJf3K4Lt7ez691+2pewBaqu+tbs7xh/dv9OYUSg+rDoE2gwsN/5obxrCrQrfxxu2t0unD0w+wsMv/HlmiyxPGaL9ucCTApTxG7u69G6kQfpnQPADs8scjxmckMX0eT1R1VmO6bovquDYdWGvn+7q0tuExdmrRCY3i8dV4ylzK2t6qO2Q3Wh1iFes2Q2jeNlSaJAW7vZE1fVGqKh/fYPBxMB3AM1UPU2qVyKBnfYmULCuyQrnSDQzG3vQN7C78glBRpUgTv0u920a6uP7RNwXggT1Q8uRlyKQf2ggSiBVM728UXrVorm6x4Y6ZLYhDLLYA8dUqBZLVDPK05CUXGdWX/Di2Oybp7CnQ+qZGMEake8XGkuhNlae32m4/YKVI6iZmtmwjvBVUa1zQ2rEqcKtPNAd+JqWkPPq9w9isWyEUYe/XJPhH6HiQtUqKNLO9AGkcD9Nck6T7VLXcmh2tjApkYjBTrOKFKgmayYk0DsWSS4VU1fcU6perXZuHM3KauHp8gDRcr4tpF6ME/c9V9MHeqhAYH+n3UEaptqTYFGRpG3YUCgOoQQqDPH8AK7Ag3oJi7QnoG3R4EW9sRVFRrpr2g/2u02d/BkUu1E5ItpANP1kQqogZEm0IGE3VPa7YL9v5dOBDY1Guwhc/gnsFNnUDaMbOPusPR6JjQ9DdZF5XXFqzwpyhXJQ8dFsKDgKtlKEUY3nuz6YA/1CPRPfrSK8IkFXybiHgOZHUXxdKLiTmY5rEX6emPfKHLi9gi0+aNWim/wLswsgYpRlGVyj3oH3n4EmgmBZqrQSLsO+qg7eLuKZbEu8gU6EFlUossSKV99a6UIdDChfRtTsY5A7UTBFULcDO0WR6DKZlkm4uqJoul1p5RweZ575epCWNerxxiBDtlPtJJfh75qh0oe6qGoQD/+sonx/SkPMU0RaGw8alyBZlI/dlPTxgMCVfn6Ber7SBTcdobaLy+uSZKpze2CFGhh9dI38MRc3ESScd0Ki4zTBNrld4/MZIHKuvZ/d6p2jfdjqBI9WczwGV9hN/AIsu5Bs2bB/t9L5wceJdDIWO8xg8E8VOE4V/ZxF94VaEDTAzM9N7mfXVc69OUQKyZatNo7ETaSUu3VYgKt/PmJ7/u3v/6f//mnshH/osezq/tPpwjUjKOBGagkJFAvpxLoyIE3IFAncaEUIlu5GCVQd1ol+sjt1tgOiJbQBciVssI2Y5pAlaJDze5WrD+sFWi8h7Ks8FtyFL1db8ZTcuAxaE9Fa2NqIQsZ7CHtj4hGnFlGnzcCG5tczotz/L8h1Q1UprNUITcZY2fRfdKWj1Tc2YVgBdQG0Q8qSOGmmS7QD7PsHzQTz4+/lg2+WOTuUT5ZoIUR6FTPqSYLxc0GRlEssB/LL8Ge0YrayDxLCbRnptcr0FCFbcZJArX5nXrFmnXBM+Is1JLj48YFWsgmWlOgssj+43CqQO2ho7wzKBZ1fHnJxOZmUb7II5C0a+JQkfHFIphC13XIyoWqrV/KiEqpA0zskVeBoR6K/6uc9j307wxOQW/y6QLNFhCon1ELdBx9ryXyCth561USWaNhgcrsmxOozO/UazmBRlFdmyTQSFi17QgFqh3QFBabYYlRouRR6GPNydwK1KYRynHKULnDBOeC9lSg+78VqxNwl3kxlEBthWOXXvsrUu+Cs28y50APRR+kFy8T+etPDTxI/+xqskC7AdIe7f1pu4qrQyg8kLudXkygXuJC68Qv34vbVdROHWTSzLaE7DJnnhuusFXwygItVL2PQaDRsIVsotUEqttrWYGaiFk32ZKHThZCzVNFIlFdIQ5bhnZNWD66IPejTlGY1/KIarn2CtS+cJfcqMr4sr6Dfrf7UEin6AQJAhXOHHq3XXkC/8Wp10C1QEdhI9rmCQt0WtzJv+cLb+iy+HHF8S4zqt6LCbS/wupwCtTAVNhkXECgPXu/qEBXibsfgTrNFfsiDAUeIdDMHlCF6Q1ljW7BUYwnE1VDEaYo5HVBK1THSbY+8bdrFoUs1lGf8rr5NvB2wNbLLHlzxK5BQnsfqJUoXtRQ9JWOnnAKr2ag3957H/46v5x8E2m+QEXbOXGXFKifOLYhHtcRqPjmFnXuHv1Xgh0SqPDBfgUaS7uSj45foKMDTxGoWS7EwSXFoj+6MzT/Qycwb45nT5DVh8IWvNNbZS2K0GLhutVP6q82gyZTt8ybelSNF9q9TvtCmtadJre8raVadaCH4jeRviP4OcBtefouBfpyS1+eedgOi2xbrpyJGyKpu/8yUWkVQx6EauWI0OJ/O/lhNRZs4f1Tt/IeSpHduGyJWdvf9jjKzGolHnXE2RVtyp2TWoQxWexIk2l33f/t7jWL7UpdvFOOXPRr4NUoHMGWLSKJyni7ZUvbiaqLnnL3QmQY6o7w6o+/bB7//LD/XSIvHl68vduUQBcsJ16BiXH00RuIoQ+QsaUg0KnsR6BOkSsIVDvErFDeCCnEmFbXz9RRDC0/TuYoSqTfZTq5CRyyX+cqU0TQe07tdam2rqIJ3NrpMs12b+/lt4+tk4jb1x3BtR//fPX85/f9+K//l+rv9/a9FfQ6f5DwHGjo7GUoqX8KH0iVTb40sP6Jp7j2Y0/u3Orv1AlJKEWgwpm8FNaVFa/wMj0UrdcRnMI7J9R7qXDkSA0HHuyhLprobxm+O4jsyWrmnr52lzjdTDJ/l9EMNVFsF9+/HGlPf8X5uXP9UmRX20XB+oKDqpQsx16x7BLu9Jm7vArW5rN3DNx70oVTJ9koKTeR3DpnkZfa3dT33/crUNu1PtnxCNQPnKmdCu9g4bREYY+mUFgEqjmMQMcHHiNQ+bdHoNZP1jXWFW5QKVATx7tG6cQPXCwtxDeGIz0TWT13JWIK58eunUqx2b6U6bwMql2M9rVOwtdfTTutJ9BnV+UJ/CEEaptmbtx9CdRo1Kz0A/fvlBf4MAIdVbFFAyNQFU78zeQhVXgSsJoVc6/AQRL42g5ZxfGQUYzynNjhgETqKu3MJ2VtFcvJ7olRFF/If/LaFaw44VMNIBvXtpIqyTbt9JtIY7nJDa+8j0DDcR2Bhk2HQPcTVzXxEQpUKMH+L7NbHZ2JgyMz2vDqo5Un12nzCe2ZkgphnKhA7VljXQtTS1t+1tZL1L0eMjtVulKdTNc0nlrrCdQmzbLMa1xd16ybtg/00DELdKG4+xOoPNq9+s8XqDqWghVGoKcgUBm2XtppgSrXyKOiE2igPnIqqKagxozCWdrJskBHoI6UXKFmst7y6yDT1XGwW/TcwbuPIPdTC7TwBJqZiPLp0/UF2nKQU/iF4u5FoPrEoggcxKkCdQ4XBLo5gU4KPF6gdoIVFKg79yyEQGNRO3sUhVCUVfGwQP2wKr8zvQykL9TgzvRjSV2Iwkwc2ki2ITtVd3ujqiKazxFoW6T+nhBVRKAjA49InBDXFaidGbiBR/nTvXyDQKfEPTGB1nn0rNQRaCasIV+V70e1uZs1OyOtQq7XAlUGDcSVOtRregUqzrSV0MzE2E4ebJid2jcdXpdZRdaV7NLIskzyUxOonHjNjruHUSRPC3TPzAzsCdRvFQSqOXaBWqRA9UmrnofZo6IVaDCW+hFjk0+6q9ugdShcGB6RMoAzjw2J3E41TFx1Wm6nhXKuLBpyrEALK1BZczlQZRUR6NjAw4lT4pqzj25pHYFm7kHjxkWgTgttosLpAm373n17syNNaY1sFzhEVDAjKO8fLNMC7QoZJ1Dz5V7n2sXT2/lzWwuVNhPbCxm2a0ix4MR3EncC1fXoSs6cTasLNESomzxma2N+3AMINHN7NzWwagkEOjXuNiqcKlBxgukLVGlPnPXvIq8+055sMu0KPdK09uyZtNkUjCsSdsNg54pLJrdirNnJ0M0GX8st6vqEE74zsmo7rxZSoOITAh0beDhxStwVBSoiIdCpcbdR4eUE6o/8wlXgLjJwQp50L8t7Au1miT2nhGaOavIXWV9LWoFaTZp5YbfebCr0BYk+gbrDTqlSVlfPSRDotMDDiVPiegINVB+B7j/uNiq8pEDtlsxN5a7vCysE6m2xC4URXZ9A7UTRaK9PoJk6oh1kmizzDvhpAg1V2XwbdMsmsC3kFAQamMElx0Wg/YWNr9c2fHR0FU4WqM1v52YNMYEOjhuTeYJAnZmpn0ckryegvS0ZsJwXXEx51YadbgK/Ik7oYHVD02kEOjrwYOKUuPorej2Bhu5sItADBN63QIvuil67xpl1FmJhOJwxjV985gQ2R/QudmmgUId9EZnaOkW4Vw38NN41zRot0FBguzLSuFknejewyIhAewIPJk6Ja759u8VFBSo+BloFgR4g8KEE2q2JDo9RIbtjNSjQ4MKIGaicqPZWIgvlcNOYk221ulegxSiBdql0sQh0dODBxElx9fE9OFMcH1iBQCfG3UaFVxDovIrFBVr0CHRE2HEC1cnDAu1uYOnVSwm0/asCi4wItCfwYOKkuAh0VmAEOpQ/NB9LrliPQHWyyHWCngxNsoEZqEmbRdWsbioYdiZ7qELTBKoinKJAF4uLQPsLG1+vbfjo6Cq8hEAD1+3SKzZqougYZlRVRwlU3iKKmrm1rLNWCTRY+oga64u2NrDNeAoCXTDuIQQ6ILrxgTUIdFrcbVR4OYEuVbFRnkuPOyRQabrYt0LwksWwQEXa4UFkMyDQQwSOCnRQdOMDaxDotLjbqDACjSRzP+s0kbO4wBXMYKyxc3ET2GZEoPsJjECXCnzMXT8xcLpAR12GPLRA29QLBM4Cv0mVAg0WP1Wgp/sg/YJxT0qggcQqIwLdS+D9C3TcbZwDC9SkXiBwbAwtK1AR2GZEoPsJ7Ah04LxkHy2BQPcU+MgFGqjXknGXCRybLMSf6EKgaXt8qMAyrr5kg0CnBT7qrp8WGIHOCGwEGnn2ST0bj0AXinsQgS4WeDixyohA9xIYgR4ksBDoCoFNxj0JFAT1e8QOXQmA06f5Yf7+ilst8mS1r/WVcajA8RnogoGHE6uMq/bQNuY3R1fhZWagK1SMGagKbDIi0P0ERqBLBT7qrp8WGIHOCNwJdLHfZKnAJiMC3U9gBLpU4KPu+mmBEeiMwE3aJZ+IVYG7jAh0P4ER6FKBj7rrpwVGoDMCI9BV9vhQgRHoUoGPuuunBUagMwIj0FX2+FCBVdzBTkWg+4+7jQoj0KUCG4GuE7jLiED3ExiBLhX4uLt+UmAEOiMwAl1ljw8VGIEuFfi4u35SYAQ6IzACXWWPDxUYgS4V+Li7flJgBDojMAJdZY8PFRiBLhX4uLt+UmAEOiPwXroege4rMAJdKvBxd/2kwAh0RmAEusoeHyowAl0q8HF3/aTACHRGYAS6yh4fKjACXSrwcXf9pMAIdEZgBLrKHh8qsCPQlQIPJlYZEeheAiPQgwRGoKvs8aECb++gQqB7CoxADxIYga6yx4cKvL2DCoHuKTACPUhgBLrKHh8q8PYOKgS6p8AI9CCBEegqe3yowNs7qBDongIj0IMERqCr7PGhAm/voEKgewqMQA8SGIGusseHCry9gwqB7ikwAj1IYAS6yh4fKvD2DioEuqfACPQggRHoKnt8qMDbO6gQ6J4CI9CDBEagq+zxoQJv76BCoHsKjEAPEvi0BApnx8svH1fc46vwXI5uhzcfGIHCYjA8V447m6Pb4c0HRqCwGAzPlePO5uh2ePOBESgsBsNz5bizObod3nxgBAqLwfBcOe5sjm6HNx8YgcJiMDxXjjubo9vhzQdGoLAYDM+V487m6HZ484ERKABAIggUACARBAoAkAgCBQBIBIECACSCQAEAEkGgAACJIFAAgETWE+gHsDXmdeizq7zjlff1puv8rVCOFw8v20/PP5/nFz/7dIm4H1WhXn/cLNy9W2Z+9UvhCt+++rlf6Yq8+50v/MT74WSGu6+UwbrITc3uh6o8Ne5OtoS7sCT0UGrgXXIXIdAzYl6HTh+e13l7GD5pst0LHsfT4r7bpLx4u1p4/rBZeiNY4dtyy1v2sxvc5cVDpw53j/KwQKfFbXbkMrKwJPRQYuCKxC5CoGfEvA59dhU9DoPD8+46bw/DcgDef1zORcJH+6S4t/lFOZt5/qgeE+X4uVfGfa8drC63+atX3Ti4fjVeiimsrORzMSRv8phAJ8WVLeEuLAs9lBh4Rhch0DNiXodOHJ4fvZl3h+F1e5iHp0FT4pYDsl5TzkXeqoZJk/MmfLjf5vfebEO/ePiTDwdGUVuNFw+7sV7NuyICnRJXtYSzsDD0UFrgOV2EQM+IeR3qDqPn1QWp1+oLUuUw+uiz+hJaOTl440lzGHZjqjysQ4fllLgvurFwnT+wcSPc5vff60q++NU2Z3WBLn+1jnibP3hyld97u6vwZfv3wa6t9Rcj10AnxZUt4SwsDT2UFnhOFyHQM2JehzrDqL0wdlEdptf5z9QL4qi7uffVbjjePWqnDOFL/tPitlTD88XAzKIcRX/Rnshdv/L7TeL2Al0d8Tb/nJjCXDsOuc4vYzeRJsWVLeEsLA09lBZ4Thch0DNiXofqYVSeor3xtLq6Va28zqurU+V3up5vpAzPMXHb07gq3JPP5nl5wAcpR9FfPmrP+i6bsXybX1SJn9TX5G7lCaBbyTLz07hAx8dVLRFYWBJ6KCmwaorAQi8I9IyY16H2Xmx1cKnzqevmUteNc1SKqUL7Nzw8p8ZtU5Wj5ytNxgfBClcj7KYe2eX/m1F03SRtTi1v5a0NZ3ia8T83rm4Jf2FJ6KGkwLop/IVeEOgZMa9D1TDSR3N7cLpnbN1hWOas5izvhp8nmR63Pf6rZ1WauLF7vPef3jZBX3nfxvjbP//lN/NmFInRJwo2w61HoKPj6pbwF5aEHkoKrJvCX+gFgZ4R8zpUnciVX+Qd5dr26pQ5xFvsZaUmZfiSf0Lcq/r62203sYk8tVeNknrwPLu67Ib48zfb6D3Ds1zbzKh6BDo6rtMS3sKS0ENJgZ2m8BZ6QaBnxLwOVcOofaZ55PCsnwx57fGIK2xj4t6085lnV71X7ppRUoWoTuaaUVTNpS5e++LvtedxYpSo4dlGXiKu2xLuwpLQQ0mB3aZwF3pBoGfEvA51hpEcMYPDM7ycFtecD5qMkecU61FUllmdxjWjqJw9XT7d2QthsjryHu9NLiUxL66/5/sS6Pn20B67CIGeEfM61D2RE/dd2yth7jBxD8Pr4L2EaXHvrs3vDc2oDZyQmdXl6Pnd6oGWehR1g797yltWr3u6sPo7QqCj4/otsbdT+LPtoT12EQI9I+Z1qB583X3X9mSpXnB/b9IdhjfdKAveSpgWV94ntveOgzd56xDlGP5CNWTUKGquzelR4v3Opf/Ec3Rc1RL+wpLQQ2mBVVP4C70g0DNiXod6TwPef7xrnwCsfjv8tHohRfApw13z8+iPrsKjaFJc9bzMs6vq1Ty993jr2yNVfHEed/deHhhFzc+25S+tewU6Oq5qCX9hSeihtMCqKfyFXhDoGTGvQ53Tv9v22ZbqPTvd71Gcd+6Yw7D9EUj4YJ8SV9zBuLRpL9ynuLvimxu1efPYYPM0dVOR96rszih57r7rp1+go+OqlvAWloQeSgysmsJb6AWB/tZLgn9Ur/pvP/2Zl1765A/+R5tIr/nDz/y9/9F8+vcvvfRP91zfGczr0PAvouvfmFznb5UTkgv3rY/2MKx+jhJ7KeSUuLe5Gp7yV9k+zSgqpx7VtKp9lqW62VxWpLvJoNI/rx76fl0MyF6Bjo+7O5BAz7eH9thFCNQT6Nd/qlv6wVaT7hoj0N86Kn9+sFpfA5wpCLTmj37o7/5S9/GHX/rkP/7vH3zwv/7DZ15qPOmt6QR6ZP78YLW+BjhTEGiNEOgvvtSdn//PH37pu4JrWoEemz8/WK2vAc4UBFpjBfqHnzEqLT9/8l+F11QC/e1j8+cHq/U1wJmCQGusQH+rvZFU84vVgr+mFugfHJ0/P1itrwHOFARaYwT69Z+SWvyD8uTdX1MLtPTnP9lzJWezWl8DnCkItMYI9I9+qDpH76jO3v01lUB/+zMvydXHwWp9DXCmINAaIVB7wbMTqLum/N9LL33yH5pbS0fDan0NcKYg0JqpM9By+ln+77v2XMu5rNbXAGcKAq2Zeg20WnV0TzF9sFpfA5wpCLQm4S589fnILoOu1tcAZwoCrUl5DrTMdGSXQVfra4AzBYHWqF8ifWf7zhD7SyRnTfdTzmO7DLpaXwOcKQi0Rgj06z9lf/n+nb8UXMPLRACgAoHWyGeVvv7T3tuYfjryNqZSrfIZp62zWl8DnCkItEY/7Dn+faDHdRl0tb4GOFMQ6BmxWl8DnCkI9IxYra8BzhQEekas1tcAZwoCPSNW62uAMwWBnhGr9TXAmYJAz4jV+hrgTEGgZ8RqfQ1wpiDQM2K1vgY4UxDoGbFaXwOcKQj0jFitrwHOFAR6RqzW1wBnCgI9I1bra4AzBYGeEav1NcCZsp5AizGMS9UknZB2StzVAk+Ku5eWWK2vAc4UBIpAASCRVIG+eHjZfrp79yrPX/2Sl2Iz2jhUYAQKcOqkCvQ6bwX6/GFe84abYjPaOFRgBApw6qQJ9O46bwV69yi/93h3915+8baTZjPaOFRgBApw6iQJ9KM3806gt/kr71d/b7oZqWEz2jhUYAQKcOqkCPSmPGF/0giznIC+FUm1GW0cKjACBTh1kgR676vlzLMW6IuHzQQ0wGa0EjYxPQAAFNlJREFUcajACBTg1Em9idQK9NnV/adPPpvnpVI7Xm5ZonYAABtmvkC/0tyFf9BtQaAAcCbMFOht9QDT093du9yFnxeXU3iAI2S+QJup5zV34WfFRaAAR8jsU/h25lldDNUpNqONQwVGoACnzmyBtnfhzQfDZrRxqMAIFODUmSnQu0ftDPQ2ZwY6Jy4CBThCZgrUXPu8trfhWzajjUMFRqAAp85cgT67yl9/zF342XERKMARMlegu9ur+jHQC+8XnZvRxqECI1CAU2e2QHfPv1Iq9LXHXorNaONQgREowKnDG+kRKAAkgkARKAAkgkARKAAkgkARKAAkgkARKAAkgkARKAAkgkARKAAkgkARKAAkgkARKAAkgkARKAAkgkARKAAkgkARKAAkgkARKAAkgkARKAAkgkARKAAkgkARKAAksp5AAQBOHGagzEABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIJFUgb54eNl++ujzeX7x+mMvxWa0cajACBTg1EkV6HXeCvTdvObibTfFZrRxqMAIFODUSRPo3XXeCvQ2v/jSbvf8Uf7K+06azWjjUIERKMCpkyTQj97MW4HePcrfqv6+eNj8FWxGG4cKjEABTp0Ugd7k+RtPGoG+eNjOPK/zB06qzWjjUIERKMCpkyTQe18tT90v1ToEOi8uAgU4QlJvIjkCffHQ3EV6uWVevU6ALFvvGTEA2AILCfTGLiLQhizDoAAnzjICveUxJpfKnuV/ywfmFB5gMywi0NurC/ce/LkLtJ59FhMMikABjo8lBHoTmH8ODvJGLacq0MqcVdyIQQMrESjA8bGAQN8N+nNgkGeNWk5UoPXO1XGDBg2tRKAAx8dsgd5d5/fcHyHV9A7r+g5LdsICNXEDrixXIVCAU2C2QK/z+0+DKXoGddaxPYFKsyVPFNvLEzuxIEJVH/3ICBTg+Jgr0JuYP6ODPFNMMMGoxNnka6vKR5kSXaB+gxNrUYedXSdDhXd88JJHuMJO6f3GT+xrAIgwU6AvHuYdl06K+CBPU+iotF3EEVdgg1XIrKmq9X6Zu4j/bFQj4a4JutVO2TZXG7iI3nNydl7X2Inr5kSgAOsxU6C3+SSBtkO89UxszEc8sxtW6MhLA1GLi7NrM5nMwhn7YjZrTBOo1aYFxMY6tUkYrLCTQ01nxcqImIuuRgCwJPt8I73Up7HCICELRaZqNpNfeiiWW05bL1WAFalJ59YkcyIaXbmliVpkxqfmgS43v6y8FWL3VeI1qYknqlUgUIA12bNAC+UQe57cj2Oh4OVJP0vfZpmk/dVlfZadtUITm3WWXaFEp7Y5ke010EzupmwLocZdpmI5lRdubJ/Qt2FUZQq3gRAowHrsfQaa2cuB1am2K4yA6OL0Z+rXpxLdYGyjwe46QiB5JpJaR4oUJmxmTsntTSenHN1whYrXPKGv/Kl2Ul0KQKAA63EIgTYiqP/bOVcZI6aLMZB+RNBKK+4peCylDhuN56TOlEe16awa/YS2KGe6aX/i5OYLXUpAoADrcRiBGkfszElzij+nU0Q+9+QwclJXDqLR6+8FL4I3Ex1bg0LeQZKrx9UcgQKsySEF6psilTFqmTjLtKucOeXwnNYpK5Bhys6Ks/pgTftqgkABVmUzAl0G9yRWfiyc+y3B7IEt6k5NtKhgobEVk1tDlbvbxRN6xSBQgPU4LYFOm2WODzBo3iUZql8xxZ8IFGBFTkug4xlZm0nXK/fAlEZEoABrc3ICFSfcZw4CBVibzQkU+S0GAgVYmc0J1N51Xk0s49nWZYcpdE8+IVCAFdmeQE+H4C+clidaCgIFWBkEerJwDRRgbY5IoM3P0Bcwy0RSKz7yaaNgkelZZRQECrAuBxfoxAfKB2221lR3+k+HDg0zUIC1WU+ggbIqZszLRmDL2VvgJUtctup77FqA8+Qwr7M7SuLvX5o56V3r6jAzUICVOfAp/G6Jh5aCeUPvd1uJkf5MrEv6O/4QKMDKHPR1dvZfAkqfxHkvPxqX6fSfCeikiUABVmMDArWvAw1JrVd1bq7Iu5T8bTP8uQH3jrpUikABVueAAnWHt5si/CJMXxGNgf2MSXPTiYRflBxJMSzfeXIuvMIQKMCq7FOg2nTe8JYG9f5FIdczg3qOWqYILeu1K2o3+G9vREueVxEECrAyexVoOyuUQ9pLUsh/MC0kxqA94wY189DC5NaCql6vKf55tmz+PDBU4f4sulKe4s3msTer7L4iUIAV2fc/a5wNCTST5vTVE9VnYe5GVX92YWkp13afdvZftgsKbYSyfIPXgcUXxmAE8+8l638wru8Lwtt5nd9v4dX6GuBM2a9AXX/6Ai2EGTIxlQooI1RAN9vcBZ0TybNT23SJfc4LV0DOZ6U/vQL0iu4fkS+8NnLDm5tI0cLlNB+BAqzHvq+BOqM+rFlXCe3oj2gl4BARV9yq78njrRFZHW/2+NMWlLUWC/izt97qCySeUro5sE3WEIECrMf+byIpBqQobTJGoCbDzq4Yk6enXMdJOyvH3nhZfWmgGOfPwip0wJ+FlO2AQZt1CBRgPfZ+E0kzRopm9I9J1brDCjQtcGcgb7Ipn/zvqUP1v/raqlkerMXg1NavcI/57feOyggAS7Lvm0ieNkYzTqCFnoBN8lFPHJt4TNTWvTvj4OFKjDJzl7Rnfu3NThEowHrs+SZSSBsjGSlQo5Gx87lo4GD+sRZXzwSMyZLWEv5JfOEYFIECrMd+r4EupI1Rccf6c3LgEdibPCPrkCxQ9/aXLRKBAqzO6Qr0oIHr67C7Cf5MbQnxkIG4bpHZLQgUYD0Q6DqBs+4B/aUDF06FAzfeVbEIFGA9EOhKgbPmefflA7sVDl3rFWsQKMB6zBfo88/nef76Y2/9utpYLu5agUdfg50aeEyFeQ4UYB/MFuizq7zi4m13wwG0kRR3tcCT/Ll4S2RcAwVYnbkCvXuU33+8e17+/6mz5SDaSIi7WuBJcVf4SYEfd2ZfA4DDXIE+u3rl/fLPi4feFPQw2pge91QFGog7s68BwGGuQG/zy+pPORF9y9myGW0cKjACBTh1mIEiUABIZLFroJfdmpdbZgYGANg6s+/C371b34V/w9xDQqAAcCbMf4zpzVqg97wHQTdz4nqowJzCA5w686+BVpPPchrKNdBZcREowBEyV6DX+YP276WzZTPaOFRgBApw6swU6N2jdub57Mp9kn4z2jhUYAQKcOogUAQKAIlwCo9AASCR+b9E4ibSEnERKMARMvsxppu84YG7YTPaOFRgBApw6sx/H+j/rd4H+hrvA50XF4ECHCG8kR6BAkAiCBSBAkAiCBSBAkAiCBSBAkAiCBSBAkAiCBSBAkAiCBSBAkAiCBSBAkAiCBSBAkAiCBSBAkAiCBSBAkAiCBSBAkAiCBSBAkAiCBSBAkAiCBSBAkAiCBSBAkAi6wkUAODEYQbKDBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEkGgCBQAEllGoM+u7j91121GG4cKjEABTp1FBHr3KEeg8+IiUIAjZBGB3uQIdGZcBApwhCwh0GdXCHRuXAQKcIQsINDyBP6LXAOdGReBAhwhCwj0Or/kJtLcuAgU4AiZL9Db8vRdCvTlltmBAQC2zWyBvnh48fYOgQLAGTJboNf5A54DnR+XU3iAI2SuQG/q++8IdG5cBApwhMwU6LOr8gQegc6Pi0ABjpCZAr3JDa+8rzdtRhuHCoxAAU4dBIpAASARXiaCQAEgEQSKQAEgEQSKQAEgEQSKQAEgEd5Ij0ABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIBEEikABIJH1BAoAcOIwA2UGCgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJIFAECgCJHM8/a/zyy0cW+OgqDAATQaAIFAASQaAIFAASQaAIFAASQaAIFAASQaAIFAASQaAIFAASQaAIFAASOR6BAgBsDAQKAJAIAgUASASBAgAkgkABABJBoAAAiSBQAIBEECgAQCJbEeizq7zjlff1puv8rVCOFw8v20/PP5/nFz/7dJHAH1WxXn/cLNy9W2Z+9UvBuLevfu5XuiLvfucLP/F+MJXl7itlrC5wU7H7wSpPDbyTTeEuAMCaHK9Ar/NWFE+abPfCppkW+N0m5cXb1cLzh83SG6G4t+WGt+xnN7bLi4dOFe4e5RGBTgvc7MhlZAEA1mQ7Ao2aIijQu+u8FUVpyPuPy8lixEeTAt/mF+V88/mjWlul4u6Vgd9rdeolffWqM9X1q/FCTFllJZ8Lad7kUYFOCiybwl0AgHU5UoF+9GbeieK6FVFkojolcKnMek05XXyrMlmT8yZopNv83ptt5BcPf/LhgOfaWrx42Mm4mhjHBDolsGoKZwEAVmarAn1eXTJ8rb5kWHruo8/qi5zl9O2NJ40oOumV4gmKY0rgF52urvMHNnCY2/z+e13JF7/aZqyuoOav1gFv8wdPrvJ7b3cVvmz/Pti1tf5i7BropMCyKZwFAFibjQq0vXJ5UYnkOv+ZekF44ebeVzth3j1qJ3WRmzLTArdUAn3RP/krPfcX7an29Su/36Rtr6DWAW/zz4lJ5rVj+ev8MnoTaVJg2RTOAgCszTYFWp5Dv/G0uvxYrbzOq+uH5axLTwiTBDomcHumXcV78tk8L50UovTcXz5qz8svG9ne5hdV2if1RdNbeYruVrLM/LRHoOMDq6YILADAmmxHoLmYZakz3uvmWuSN4w0xmWv/RgQ6NXCbqhTcV5qMD0IVrhx4U6u3/H/juesmZXPufyvvPTkCNYKeHVg3hb8AAGuySYFq37T6cE+pO1GUOatJ5buRJ36mB24VVT1O1ASO3IW///S2ifnK+zbE3/75L7+ZN54TfhTlGiH2CXR0YN0U/gIArMl2BCosVk61xLOb7fVDI6GWW3HnpCJyUyYh8FV9hfS2m3qGH6ysPFbr7dnVZefg52+2wXsEWq5tprx9Ah0d2GkKbwEA1mSTAm2fOh8p0PrZndcej7kGOibwTTvjfHbVe3G19lgVoTrdbjxXTXYvXvvi77Vn2sJjSqBt4D6Bjg7sNoW7AABrslGBSqUNCjS8nBjYnLGbjOEnSWvPlWVWJ9qN58rp7eXTnb1UKasj78Lf5NLiMwP7u45AAfbGJgWqH8FsL1W6HnNFcR2+2TMt8N21+Umo8WrgnLlbW/rtd6tHjmrPdXbuHsOX1eue/6z+jhHo6MB+UyBQgL2xSYGaG+Pt6Wy94P4gqBPFTafB4L2eiYHlrXx7ez9k5jpCKdkvVFJTnmsunmqPeb9EGjiFHx1YNYW/AABrsk2BlnOt+4937SOa1a+7n1avDAk+B9r+fv2jq/AEdFpg9UTTs6vq7Ul9d+HrG1hVeHGmffdeHvBc87t6+Vv4foGODqyawl8AgDXZpkB3t1f2RUjdD4aclyIZUbQ/0wnraFJgcY/p0qa9CP6i87a9lZ43D3Y2z7s3FXmvyu147Ln7NqYBgY4OrJrCWwCANdmoQNufrNc/ArrO3ypnjBfuazmtKKrfC0Xe2jkt8G2uBCp/N+/ReK6cHFYT3/Zpo+pxgLIi3W0glf559VT+60KZ/QIdH3iHQAEOxVYECgBwdCBQAIBEECgAQCIIFAAgEQQKAJAIAgUASASBAgAkgkABABJBoAAAiSBQAIBEECgAQCIIFAAgEQQKAJAIAoVN8mH2Lb+ZkO2d7Nv/bPG6AMRAoLBJYgL9478fFmS7HoHCXkGgsEkiAo0JsluPQGGvIFDYJIkCBdgrCBQ2CQKFYwCBwiZBoHAMIFDYFn/yo1n2ie//MyPQb/zcp7Is+54fr/z4YVbzA9X6v6nWf+LTv7FT6xuRfvzl7Dt2f/IjdaAmYtYkdPIBzASBwpYo1VfzLT/XCPTjX8tavu03lUA/7NZ//y4o0L/zThvoN9sIn/h3dQEqH8BMEChsiVJ75aSx1mYt0A/r5d3flLPJ72i2N6fqHzZzym/+WmtCfRe+1nAb51uzT//p7uOvZU0CNx/ALBAobIi//lRzfl6JrhLo//tnjTerD7UAW1GW6Zr1ZcJ6aukL9AfabG3Cd+p4Xj6AWSBQ2BDvdFc+S/NVn/6q01ypxHrLO91EsrvFVF/uDAi03f6OPXWvPnj5AGaBQGE7CKu949yFf0cKVNqvWeMJtL0pb8LUKvbzAcwCgcJ2MGfs6jGmb37j13/+uzMp0OrM3FJt8ATaxtEC9fMBzAKBwnYoBfcD7cdOoH/83cp3CBQ2BQKF7eDNQJunmr7nx/7Nn77jCNS5gDlaoFz4hCVBoLAdvGug7VNMO/8aqHMBc5xA/XwAs0CgsCHMlc/mProVXntXvhOlubneJRknUD8fwCwQKGwI85xm8xyotdyH6hpola7d8FdZ9i93owXq5QOYBQKFLdH8Usj8Eqk9hf/Gj3S/xawe5/z4T+sN3/YLO/kLo2b9gEC9fACzQKCwKdpfrn/bv25+ifQj7R3zT3+tmTH+VbVQydH8pr3xYLd+SKBuPoBZIFDYFt9Qb2P6+D99d/XupP9qbqD/8adKUVbu+5ufqx5w+t5faLO16wcF6uYDmAMCBQBIBIECACSCQAEAEkGgAACJIFAAgEQQKABAIggUACARBAoAkAgCBQBIBIECACSCQAEAEkGgAACJIFAAgEQQKABAIggUACARBAoAkAgCBQBIBIECACSCQAEAEkGgAACJ/H/c4Hs1xS876QAAAABJRU5ErkJggg==" width="672" /></p>
 
 
 
